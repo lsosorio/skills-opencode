@@ -50,3 +50,4 @@ opencode
 En el chat de OpenCode solicita:
 
 > Inicia el repo para el laboratorio 1 con `iniciar-repo-ia`.
+

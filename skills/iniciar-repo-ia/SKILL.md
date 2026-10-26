@@ -1,6 +1,6 @@
 ---
 name: iniciar-repo-ia
-description: Inicializa un repositorio o workspace de Inteligencia Artificial y Modelos de Lenguaje en Python con uv para OpenCode y DeepSeek (iniciar repo, empezar proyecto IA, nuevo workspace uv). Configura git, remoto público en GitHub, proyecto empaquetado con uv (sin pip ni Jupyter Notebooks), ruff, pytest, AGENTS.md con buenas prácticas de ingeniería de software, Engram, odd/tasks, GGA con DeepSeek y CI en GitHub Actions.
+description: Inicializa un repositorio o workspace de Inteligencia Artificial y Modelos de Lenguaje en Python con uv para OpenCode y DeepSeek (iniciar repo, empezar proyecto IA, nuevo workspace uv). Configura git, remoto privado en GitHub, proyecto empaquetado con uv (sin pip ni Jupyter Notebooks), ruff, pytest, AGENTS.md con buenas prácticas de ingeniería de software, Engram, odd/tasks, GGA con DeepSeek y CI en GitHub Actions.
 ---
 
 # iniciar-repo-ia
@@ -25,7 +25,7 @@ Toma de la petición lo que venga y pregunta el resto en **un solo mensaje**:
   - *Repo suelto* (por defecto).
   - *Repo dentro de un workspace:* la carpeta padre agrupa varios repos de un mismo proyecto. Se corre dentro del repo; si la raíz aún no tiene `AGENTS.md` ni `.engram/`, los crea este skill (pasos 4 y 5).
   - *Workspace con repos existentes:* se corre en la raíz.
-- **Remoto:** ¿se crea en GitHub? Por defecto **público** (`--public`), salvo que el usuario pida privado (`--private`) o indique que ya existe (paso 10).
+- **Remoto:** ¿ya existe? Si no, se ofrece crearlo **privado** (`--private`) en el paso 10.
 
 Si el nombre de la carpeta actual tiene espacios, avisa: los espacios en rutas obligan a entrecomillar en todos los scripts. Propón renombrarla al *slug* antes de seguir.
 
@@ -174,7 +174,7 @@ for l in \
 done
 ```
 
-Crea la plantilla `.env.example` sin valores reales (doblemente crítico porque los repos son públicos):
+Crea la plantilla `.env.example` sin valores reales:
 
 ```bash
 [ -f .env.example ] || cat << 'EOF' > .env.example
@@ -252,7 +252,7 @@ engram init <slug>
 ```
 
 - `.engram/config.json` **se versiona**: así cualquier clon resuelve el mismo proyecto.
-- **Repo suelto:** es el repo de sincronización. `engram sync` exporta a `.engram/chunks/`, que se sube con git **después de revisarlo** para asegurar que no contenga datos sensibles (especialmente en repos públicos).
+- **Repo suelto:** es el repo de sincronización. `engram sync` exporta a `.engram/chunks/`, que se sube con git **después de revisarlo**, porque lo subido queda en el historial para siempre.
 - **Workspace:** `engram init <slug>` en la raíz **y** en cada repo, con el **mismo** nombre. Pregunta cuál repo sincroniza. En los demás, agrega `.engram/chunks/` a su `.gitignore` para evitar copias desincronizadas.
 - **Repo dentro de un workspace:** el nombre de Engram es el del workspace, no el del repo. Si la raíz ya tiene `.engram/config.json`, toma el nombre de ahí; si no, ejecuta `engram init <slug-workspace>` en la raíz primero y luego en el repo.
 
@@ -442,16 +442,16 @@ El secreto `DEEPSEEK_API_KEY` se configura **después del push** (`gh secret set
 
 **Respaldo sin costo de API:** si prefieres usar GitHub Models en CI sin consumir saldo de DeepSeek, agrega `models: read` en `permissions` y en `env` define `GGA_PROVIDER: github:deepseek/DeepSeek-V3-0324` y `GH_TOKEN: ${{ github.token }}`.
 
-## 10. Remoto público y primer commit (con confirmación)
+## 10. Remoto privado y primer commit (con confirmación)
 
 1. Formatea el código con `uv run ruff format .` y verifica `git status --short`.
-2. **Seguridad antes de publicar:** dado que el repositorio es público por defecto, comprueba que `git status --short` **no** incluya `.env`, claves ni archivos fuera de lugar.
+2. Comprueba que `git status --short` **no** incluya `.env`, claves ni archivos fuera de lugar.
 3. Pregunta confirmación antes del primer commit.
 4. Haz el commit con Conventional Commits: `chore: iniciar repositorio con uv y reglas base`.
-5. Si no hay remoto configurado, pide confirmación para crearlo **público** (o privado si el usuario lo pidió así en el paso 1) y hacer el push:
+5. Si no hay remoto configurado, pide confirmación para crearlo **privado** y hacer el push:
 
    ```bash
-   gh repo create <dueño>/<slug> --public --source . --remote origin --push
+   gh repo create <dueño>/<slug> --private --source . --remote origin --push
    ```
 
    *(El dueño por defecto es el usuario activo en `gh auth status`).*

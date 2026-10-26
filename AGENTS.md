@@ -42,3 +42,4 @@ Por defecto (rómpelo solo con motivo claro):
 - Varía el largo de las oraciones. Corta toda frase que no aporte información nueva.
 
 Excepción: en documentación técnica, specs y presentaciones, tablas, listas y negritas son correctas cuando ordenan información real. Las reglas de escritura apuntan a la prosa.
+
