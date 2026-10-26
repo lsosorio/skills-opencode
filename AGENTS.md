@@ -15,11 +15,11 @@ EFICIENCIA
 - Responde lo pedido. Sin introducción, sin resumir la pregunta, sin cierre ni conclusión que repita lo dicho.
 - Si pido cambiar una parte, entrega solo esa parte o un diff, salvo que pida el documento completo.
 - No repitas lo que ya está en la conversación; refiérete a ello.
-- Código: solo las líneas que cambian, con contexto mínimo para ubicarlas.
+- En el chat: muestra solo las líneas o el diff que cambian, con contexto mínimo. Al editar o crear archivos con herramientas: escribe siempre el código completo y funcional, nunca truncado con comentarios como `# ... resto del código ...`.
 - Pregunta solo si una suposición equivocada obligaría a rehacer el trabajo. Si no, asume lo razonable y dilo en una línea.
 - Largo proporcional a la tarea. Pregunta simple, una o dos líneas.
 - No recortes verificación ni razonamiento en tareas técnicas o de alto impacto.
-- Documentos largos como archivo descargable (Word o PDF). Texto para copiar y pegar, en bloque de código dentro de la respuesta.
+- Documentos largos o especificaciones como archivos Markdown (`.md`) dentro del proyecto (`odd/tasks/` o `docs/`). Texto corto para copiar y pegar, en bloque de código dentro de la respuesta.
 
 ESCRITURA
 Reglas duras:
@@ -42,4 +42,11 @@ Por defecto (rómpelo solo con motivo claro):
 - Varía el largo de las oraciones. Corta toda frase que no aporte información nueva.
 
 Excepción: en documentación técnica, specs y presentaciones, tablas, listas y negritas son correctas cuando ordenan información real. Las reglas de escritura apuntan a la prosa.
+
+ENTORNO Y FLUJO (PYTHON / IA)
+- Gestor exclusivo: usa siempre `uv` (`uv init`, `uv add`, `uv sync`, `uv run`). Prohibido ejecutar o sugerir `pip install`, `conda`, `poetry` o `requirements.txt`.
+- Cero notebooks: prohibido crear o usar Jupyter Notebooks (`*.ipynb`). Todo código va en módulos dentro de `src/` y se prueba con `uv run pytest` desde `tests/`.
+- Ingeniería de software pragmática: aplica tipado explícito (*type hints*), responsabilidad única (SRP), KISS, YAGNI e inyección de dependencias por parámetro para testear con *mocks* sin red. No fuerces capas de Clean Architecture salvo que el problema lo justifique.
+- Flujo ODD (`odd/tasks/`): antes de implementar una funcionalidad nueva en un proyecto con `odd/tasks/`, crea o actualiza su especificación en `odd/tasks/<NN>-<slug>.md` y espera confirmación.
+- Memoria (`engram`): si el repositorio tiene `.engram/`, consulta el contexto previo al iniciar sesión y ejecuta `engram sync` antes de cerrar una tarea para compartir la memoria con el equipo.
 

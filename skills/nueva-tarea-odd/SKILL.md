@@ -114,3 +114,4 @@ Una vez que el usuario apruebe:
    ```
 
 5. Si todo pasa sin errores, actualiza la sección `## 5. Evidencia de verificación` de `odd/tasks/<NN>-<slug>.md` con el resultado real de `ruff` y `pytest`, marca los criterios de aceptación cumplidos (`[x]`) e indica al usuario que puede revisar los cambios o ejecutar el skill `cerrar-tarea-pr` para sincronizar Engram y abrir el Pull Request.
+
