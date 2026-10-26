@@ -216,8 +216,13 @@ Stack: Python (>=3.12) gestionado exclusivamente con `uv`.
 ## Estructura base
 - `src/<paquete>/`: código fuente modular del proyecto.
 - `tests/`: pruebas unitarias con `pytest`.
-- `odd/tasks/`: especificaciones de tareas y features.
+- `odd/tasks/`: especificaciones de tareas y features (basadas en `odd/tasks/_plantilla.md`).
 - `.engram/`: memoria compartida del proyecto (`config.json`, `manifest.json` y `chunks/`).
+
+## Flujo de trabajo en equipo y ODD
+- **Onboarding al clonar por primera vez:** ejecutar `uv sync && engram sync --import && gga install` (o correr `iniciar-repo-ia` para instalar los hooks locales).
+- **Especificar antes de programar (ODD):** para cada funcionalidad o requerimiento nuevo, crear primero `odd/tasks/<NN>-<slug>.md` siguiendo `odd/tasks/_plantilla.md` (Objetivo, Entradas/Salidas, Criterios de aceptación y Tareas) y validarlo con el usuario antes de escribir código en `src/`.
+- **Cierre de cada tarea:** correr `uv run ruff check .`, `uv run pytest`, registrar la evidencia en el archivo de `odd/tasks/` y ejecutar `engram sync && git add .engram/` antes del commit.
 
 ## Decisiones
 Cada decisión técnica o de diseño entra aquí con su fecha y su motivo.
@@ -269,13 +274,45 @@ engram init <slug>
 - **Workspace:** `engram init <slug>` en la raíz **y** en cada repo, con el **mismo** nombre. Pregunta cuál repo sincroniza `.engram/chunks/`. En los demás, agrega `.engram/chunks/` y `.engram/manifest.json` a su `.gitignore` para evitar copias desincronizadas.
 - **Repo dentro de un workspace:** el nombre de Engram es el del workspace, no el del repo. Si la raíz ya tiene `.engram/config.json`, toma el nombre de ahí; si no, ejecuta `engram init <slug-workspace>` en la raíz primero y luego en el repo.
 
-## 6. ODD
+## 6. ODD (Especificaciones en `odd/tasks/`)
+
+Crea el directorio `odd/tasks/` y la plantilla base `odd/tasks/_plantilla.md` para que todos los requerimientos del equipo sigan el mismo estándar:
 
 ```bash
-mkdir -p odd/tasks && [ -e odd/tasks/.gitkeep ] || touch odd/tasks/.gitkeep
+mkdir -p odd/tasks
+[ -f odd/tasks/_plantilla.md ] || cat << 'EOF' > odd/tasks/_plantilla.md
+# <NN> - <Título de la funcionalidad o experimento>
+
+Estado: propuesto | en progreso | completado
+Rama: `feat/<slug>`
+
+## 1. Objetivo
+<Qué problema o requerimiento resuelve en 1 o 2 líneas.>
+
+## 2. Especificación técnica (Entradas / Salidas)
+- **Módulo(s):** `src/<paquete>/<modulo>.py`
+- **Entradas:** <parámetros y tipos esperados>
+- **Salidas:** <tipo de retorno o estructura de datos>
+- **Dependencias / Configuración:** <modelos, hiperparámetros o clientes inyectados>
+
+## 3. Criterios de aceptación
+- [ ] <Comportamiento esperado en el caso normal>
+- [ ] <Manejo de casos borde o entradas inválidas>
+- [ ] Funciones tipadas (*type hints*) y probadas en `tests/test_<modulo>.py` sin llamadas reales a red
+
+## 4. Tareas de implementación
+- [ ] **T1:** <Definir modelos de datos y firmas en `src/`>
+- [ ] **T2:** <Implementar lógica principal>
+- [ ] **T3:** <Escribir pruebas unitarias en `tests/`>
+- [ ] **T4:** <Verificar con `uv run ruff check .`, `uv run pytest` y exportar memoria con `engram sync`>
+
+## 5. Evidencia de verificación
+- `uv run ruff check .` -> <resultado>
+- `uv run pytest` -> <resultado>
+EOF
 ```
 
-Los documentos de tareas y features (`odd/tasks/<feature>.md`) se versionan junto con el código.
+Los documentos de tareas (`odd/tasks/<NN>-<feature>.md`) se versionan junto con el código.
 
 ## 7. GGA (Gentleman Guardian Angel con OpenCode + DeepSeek)
 
@@ -480,7 +517,7 @@ Comprueba con comandos reales, no supongas:
 - `cat .engram/config.json` (si `engram` está instalado) → contiene el *slug* esperado.
 - `[ -x "$(git rev-parse --git-dir)/hooks/post-merge" ]` → hook activo para importar memorias de `.engram/chunks/` automáticamente en cada `git pull`.
 - `git status --short` → limpio y sin exponer `.env`.
-- `odd/tasks/` → existe.
+- `odd/tasks/_plantilla.md` → existe.
 - Si hubo push: `gh workflow list` muestra los workflows `CI (uv + ruff + pytest)` y `Revisión GGA (DeepSeek)`, y `gh secret list` muestra `DEEPSEEK_API_KEY` (si ya se cargó).
 
 Cierra con una tabla concisa de lo creado, lo que falló y lo pendiente (herramientas faltantes o secreto de CI).
