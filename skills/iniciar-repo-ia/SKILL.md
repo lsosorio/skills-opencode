@@ -207,6 +207,8 @@ Stack: Python (>=3.12) gestionado exclusivamente con `uv`.
 
 ## Cómo se ejecuta
 - Sincronizar entorno: `uv sync`
+- Importar memoria del equipo (al clonar o tras `git pull`): `engram sync --import`
+- Exportar memoria nueva al repo (antes de hacer commit/push): `engram sync && git add .engram/`
 - Ejecutar módulo principal: `uv run <slug>` (o `uv run python -m <paquete>`)
 - Linter y formato: `uv run ruff check .` y `uv run ruff format --check .`
 - Pruebas: `uv run pytest`
@@ -215,6 +217,7 @@ Stack: Python (>=3.12) gestionado exclusivamente con `uv`.
 - `src/<paquete>/`: código fuente modular del proyecto.
 - `tests/`: pruebas unitarias con `pytest`.
 - `odd/tasks/`: especificaciones de tareas y features.
+- `.engram/`: memoria compartida del proyecto (`config.json`, `manifest.json` y `chunks/`).
 
 ## Decisiones
 Cada decisión técnica o de diseño entra aquí con su fecha y su motivo.
@@ -245,15 +248,25 @@ PREFER:
 
 En un **workspace**: crea un `AGENTS.md` en la raíz solo con el contexto común y una tabla de repos con su `Estado` (sin bloque de GGA), y un `AGENTS.md` completo por cada repo con la plantilla de arriba.
 
-## 5. Engram
+## 5. Engram (Memoria compartida en el proyecto)
 
 ```bash
 engram init <slug>
 ```
 
-- `.engram/config.json` **se versiona**: así cualquier clon resuelve el mismo proyecto.
-- **Repo suelto:** es el repo de sincronización. `engram sync` exporta a `.engram/chunks/`, que se sube con git **después de revisarlo**, porque lo subido queda en el historial para siempre.
-- **Workspace:** `engram init <slug>` en la raíz **y** en cada repo, con el **mismo** nombre. Pregunta cuál repo sincroniza. En los demás, agrega `.engram/chunks/` a su `.gitignore` para evitar copias desincronizadas.
+- **Memoria compartida por Git (`.engram/`):** `.engram/config.json`, `.engram/manifest.json` y `.engram/chunks/*.jsonl.gz` **se versionan** dentro del repositorio. Así todo el equipo comparte y actualiza la base de datos de conocimiento del proyecto sin conflictos binarios de SQLite:
+  - Antes de subir cambios: `engram sync` exporta las memorias nuevas a `.engram/chunks/` (revisar antes de hacer `git add .engram/` porque lo subido queda en el historial).
+  - Al bajar cambios del equipo: `engram sync --import` incorpora los nuevos chunks de `.engram/chunks/` a la base local de cada integrante.
+- **Automatización al hacer `git pull` (`post-merge` hook):** configura en `.git/hooks/post-merge` la importación automática para que cada `git pull` actualice la memoria local del compañero sin pasos manuales:
+
+  ```bash
+  HOOK="$(git rev-parse --git-dir)/hooks/post-merge"
+  [ -f "$HOOK" ] || printf '#!/usr/bin/env bash\n' > "$HOOK"
+  grep -q 'engram sync --import' "$HOOK" 2>/dev/null || printf 'command -v engram >/dev/null 2>&1 && engram sync --import >/dev/null 2>&1 || true\n' >> "$HOOK"
+  chmod +x "$HOOK"
+  ```
+
+- **Workspace:** `engram init <slug>` en la raíz **y** en cada repo, con el **mismo** nombre. Pregunta cuál repo sincroniza `.engram/chunks/`. En los demás, agrega `.engram/chunks/` y `.engram/manifest.json` a su `.gitignore` para evitar copias desincronizadas.
 - **Repo dentro de un workspace:** el nombre de Engram es el del workspace, no el del repo. Si la raíz ya tiene `.engram/config.json`, toma el nombre de ahí; si no, ejecuta `engram init <slug-workspace>` en la raíz primero y luego en el repo.
 
 ## 6. ODD
@@ -272,7 +285,7 @@ Escribe `.gga` directo (sin `gga init`):
 PROVIDER="opencode:deepseek/deepseek-chat"
 RULES_FILE="AGENTS.md"
 STRICT_MODE="true"
-EXCLUDE_PATTERNS="uv.lock,*.lock,*.min.js,*.min.css,*.map,*.svg,*.png,*.jpg,*.jpeg,*.gif,*.ico,*.pdf,*.woff,*.woff2"
+EXCLUDE_PATTERNS="uv.lock,*.lock,.engram/*,*.jsonl.gz,*.min.js,*.min.css,*.map,*.svg,*.png,*.jpg,*.jpeg,*.gif,*.ico,*.pdf,*.woff,*.woff2"
 ```
 
 Luego instala el hook y verifica la configuración (si `gga` está instalado en el sistema):
@@ -465,6 +478,7 @@ Comprueba con comandos reales, no supongas:
 - `uv run ruff check .` y `uv run pytest` → pasan sin errores.
 - `gga config` (si `gga` está instalado) → `PROVIDER: opencode:deepseek/deepseek-chat`.
 - `cat .engram/config.json` (si `engram` está instalado) → contiene el *slug* esperado.
+- `[ -x "$(git rev-parse --git-dir)/hooks/post-merge" ]` → hook activo para importar memorias de `.engram/chunks/` automáticamente en cada `git pull`.
 - `git status --short` → limpio y sin exponer `.env`.
 - `odd/tasks/` → existe.
 - Si hubo push: `gh workflow list` muestra los workflows `CI (uv + ruff + pytest)` y `Revisión GGA (DeepSeek)`, y `gh secret list` muestra `DEEPSEEK_API_KEY` (si ya se cargó).
