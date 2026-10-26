@@ -169,9 +169,14 @@ for l in \
   'mlruns/' \
   '.hf_cache/' \
   'data/raw/*' \
-  '!data/raw/.gitkeep'; do
+  '!data/raw/.gitkeep' \
+  'data/processed/*' \
+  '!data/processed/.gitkeep'; do
   [ -n "$l" ] && agregar "$l" .gitignore || echo "" >> .gitignore
 done
+mkdir -p data/raw data/processed
+[ -e data/raw/.gitkeep ] || touch data/raw/.gitkeep
+[ -e data/processed/.gitkeep ] || touch data/processed/.gitkeep
 ```
 
 Crea la plantilla `.env.example` sin valores reales:
@@ -216,13 +221,15 @@ Stack: Python (>=3.12) gestionado exclusivamente con `uv`.
 ## Estructura base
 - `src/<paquete>/`: código fuente modular del proyecto.
 - `tests/`: pruebas unitarias con `pytest`.
+- `data/raw/` y `data/processed/`: datos de entrada y procesados (ignorados en git salvo `.gitkeep`).
 - `odd/tasks/`: especificaciones de tareas y features (basadas en `odd/tasks/_plantilla.md`).
 - `.engram/`: memoria compartida del proyecto (`config.json`, `manifest.json` y `chunks/`).
+- `scripts/setup.sh`: script de onboarding para configurar entorno y hooks locales tras clonar.
 
 ## Flujo de trabajo en equipo y ODD
-- **Onboarding al clonar por primera vez:** ejecutar `uv sync && engram sync --import && gga install` (o correr `iniciar-repo-ia` para instalar los hooks locales).
-- **Especificar antes de programar (ODD):** para cada funcionalidad o requerimiento nuevo, crear primero `odd/tasks/<NN>-<slug>.md` siguiendo `odd/tasks/_plantilla.md` (Objetivo, Entradas/Salidas, Criterios de aceptación y Tareas) y validarlo con el usuario antes de escribir código en `src/`.
-- **Cierre de cada tarea:** correr `uv run ruff check .`, `uv run pytest`, registrar la evidencia en el archivo de `odd/tasks/` y ejecutar `engram sync && git add .engram/` antes del commit.
+- **Onboarding al clonar por primera vez:** ejecutar `./scripts/setup.sh` (sincroniza `uv`, importa memoria de Engram e instala los hooks locales `gga` y `post-merge`).
+- **Especificar antes de programar (ODD):** usar el skill `nueva-tarea-odd` (o crear primero `odd/tasks/<NN>-<slug>.md` siguiendo `odd/tasks/_plantilla.md`) y validarlo con el usuario antes de escribir código en `src/`.
+- **Cierre de cada tarea:** usar el skill `cerrar-tarea-pr` (o correr `uv run ruff check .`, `uv run pytest`, registrar la evidencia en `odd/tasks/` y ejecutar `engram sync && git add .engram/` antes del commit).
 
 ## Decisiones
 Cada decisión técnica o de diseño entra aquí con su fecha y su motivo.
@@ -262,13 +269,24 @@ engram init <slug>
 - **Memoria compartida por Git (`.engram/`):** `.engram/config.json`, `.engram/manifest.json` y `.engram/chunks/*.jsonl.gz` **se versionan** dentro del repositorio. Así todo el equipo comparte y actualiza la base de datos de conocimiento del proyecto sin conflictos binarios de SQLite:
   - Antes de subir cambios: `engram sync` exporta las memorias nuevas a `.engram/chunks/` (revisar antes de hacer `git add .engram/` porque lo subido queda en el historial).
   - Al bajar cambios del equipo: `engram sync --import` incorpora los nuevos chunks de `.engram/chunks/` a la base local de cada integrante.
-- **Automatización al hacer `git pull` (`post-merge` hook):** configura en `.git/hooks/post-merge` la importación automática para que cada `git pull` actualice la memoria local del compañero sin pasos manuales:
+- **Automatización al hacer `git pull` (`post-merge` hook) y script de onboarding (`scripts/setup.sh`):** crea `scripts/setup.sh` versionado y ejecútalo para que tanto quien inicia el repo como cualquier compañero que lo clone después quede con `uv`, `engram`, `gga` y el hook `post-merge` configurados de una vez:
 
   ```bash
+  mkdir -p scripts
+  [ -f scripts/setup.sh ] || cat << 'EOF' > scripts/setup.sh
+  #!/usr/bin/env bash
+  set -euo pipefail
+  uv sync
+  command -v engram >/dev/null 2>&1 && engram sync --import || true
+  command -v gga >/dev/null 2>&1 && gga install || true
   HOOK="$(git rev-parse --git-dir)/hooks/post-merge"
   [ -f "$HOOK" ] || printf '#!/usr/bin/env bash\n' > "$HOOK"
   grep -q 'engram sync --import' "$HOOK" 2>/dev/null || printf 'command -v engram >/dev/null 2>&1 && engram sync --import >/dev/null 2>&1 || true\n' >> "$HOOK"
   chmod +x "$HOOK"
+  echo "Entorno y hooks configurados."
+  EOF
+  chmod +x scripts/setup.sh
+  ./scripts/setup.sh
   ```
 
 - **Workspace:** `engram init <slug>` en la raíz **y** en cada repo, con el **mismo** nombre. Pregunta cuál repo sincroniza `.engram/chunks/`. En los demás, agrega `.engram/chunks/` y `.engram/manifest.json` a su `.gitignore` para evitar copias desincronizadas.
