@@ -1,11 +1,11 @@
 ---
 name: iniciar-repo-ia
-description: Inicializa un repositorio o workspace de Inteligencia Artificial y Modelos de Lenguaje en Python con uv para OpenCode y DeepSeek (iniciar repo, empezar proyecto IA, nuevo workspace uv). Configura git, remoto privado en GitHub, proyecto empaquetado con uv (sin pip ni Jupyter Notebooks), ruff, pytest, AGENTS.md con buenas prácticas de ingeniería de software, Engram, odd/tasks, GGA con DeepSeek y CI en GitHub Actions.
+description: Inicializa un repositorio o workspace de Python e Inteligencia Artificial con uv para OpenCode y DeepSeek (iniciar repo, empezar proyecto Python/IA, nuevo workspace uv). Configura git, remoto privado en GitHub, proyecto empaquetado con uv (sin pip ni Jupyter Notebooks), ruff, pytest, AGENTS.md con buenas prácticas de ingeniería de software, Engram, odd/tasks, GGA con DeepSeek y CI en GitHub Actions.
 ---
 
 # iniciar-repo-ia
 
-Deja un repositorio (o un workspace con varios) de Inteligencia Artificial en Python listo para trabajar con **OpenCode**, **DeepSeek**, **`uv`**, **Engram**, **GGA** y **ODD**. Corre en el directorio actual.
+Deja un repositorio (o un workspace con varios) de Python e Inteligencia Artificial listo para trabajar con **OpenCode**, **DeepSeek**, **`uv`**, **Engram**, **GGA** y **ODD**. Corre en el directorio actual.
 
 - **Idempotente:** si un paso ya está hecho, se salta. Nunca sobrescribe un archivo existente: lo muestra y pregunta si se completa o se deja.
 - **Con confirmación:** crear el remoto en GitHub, el primer commit y el push se preguntan antes de ejecutar. Lo demás se hace sin preguntar.
@@ -18,8 +18,8 @@ Deja un repositorio (o un workspace con varios) de Inteligencia Artificial en Py
 Toma de la petición lo que venga y pregunta el resto en **un solo mensaje**:
 
 - **Nombre** del proyecto. De él salen:
-  - El *slug* (minúsculas y guiones, sin espacios: `Tarea Atención` → `tarea-atencion`), que usan Engram, la carpeta y el repo de GitHub.
-  - El *paquete* Python (minúsculas y guiones bajos: `tarea_atencion`), que vive en `src/<paquete>/`.
+  - El *slug* (minúsculas y guiones, sin espacios: `Servicio Embeddings` → `servicio-embeddings`), que usan Engram, la carpeta y el repo de GitHub.
+  - El *paquete* Python (minúsculas y guiones bajos: `servicio_embeddings`), que vive en `src/<paquete>/`.
 - **Qué es**, en una o dos líneas.
 - **Tipo:**
   - *Repo suelto* (por defecto).
@@ -204,7 +204,6 @@ OpenCode lee `AGENTS.md` como archivo principal de contexto y GGA revisa cada co
 # <Nombre>
 
 Estado: base activa
-Curso: Técnicas Avanzadas de IA para Modelos de Lenguaje
 Stack: Python (>=3.12) gestionado exclusivamente con `uv`.
 
 ## Qué es

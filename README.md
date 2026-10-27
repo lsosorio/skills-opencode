@@ -1,41 +1,49 @@
-# Skills para OpenCode + DeepSeek (IA y Modelos de Lenguaje)
+# Skills para OpenCode + DeepSeek (Python e IA con `uv`)
 
-Colección de skills e instrucciones globales para **OpenCode** con **DeepSeek**, enfocados en proyectos de **Técnicas Avanzadas de IA para Modelos de Lenguaje** en Python usando exclusivamente **`uv`**.
+Colección de skills e instrucciones globales para **OpenCode** con **DeepSeek**, orientados al desarrollo de proyectos de **Python e Inteligencia Artificial** usando exclusivamente **`uv`**, buenas prácticas de ingeniería de software, **ODD (`odd/tasks`)**, **Engram** y **GGA**.
 
 ## Estructura
 
-- `AGENTS.md`: Instrucciones globales de idioma, criterio, eficiencia y escritura para `~/.config/opencode/AGENTS.md`.
-- `skills/*/SKILL.md`: Definición completa de cada skill (`iniciar-repo-ia`, `nueva-tarea-odd`, `cerrar-tarea-pr`).
-- `commands/*.md`: Atajos de barra (`/iniciar-repo-ia`, `/nueva-tarea-odd`, `/cerrar-tarea-pr`) para que aparezcan en el menú autocompletable `/` de la consola de OpenCode.
-- `install.sh`: Instalador directo que enlaza `AGENTS.md`, `skills/` y `commands/` en `~/.config/opencode/`.
+- `AGENTS.md`: Instrucciones globales de idioma, criterio, eficiencia, escritura y flujo de trabajo para `~/.config/opencode/AGENTS.md`.
+- `skills/iniciar-repo-ia/SKILL.md`: Inicializa repositorios privados y workspaces en Python con `uv` (sin `pip` ni Jupyter Notebooks), configurado con `ruff`, `pytest`, `AGENTS.md`, Engram compartido en equipo, `odd/tasks/_plantilla.md`, GGA (DeepSeek) y GitHub Actions CI.
+- `skills/nueva-tarea-odd/SKILL.md`: Especifica un nuevo requerimiento bajo ODD en `odd/tasks/<NN>-<slug>.md`, crea su rama `feat/<NN>-<slug>`, pide confirmación antes de programar e implementa tarea por tarea con `ruff` y `pytest`.
+- `skills/cerrar-tarea-pr/SKILL.md`: Audita calidad (`ruff` + `pytest` + cero `.ipynb`/secretos), cierra el documento en `odd/tasks/`, exporta la memoria del equipo con `engram sync`, hace el commit validado por GGA y abre el Pull Request en GitHub.
 
-## Instalación sin conflictos con Claude Code
+## Instalación
 
-En OpenCode los **skills** (`~/.config/opencode/skills/`) se invocan por lenguaje natural, mientras que los **comandos con `/`** del menú interactivo se leen desde `~/.config/opencode/commands/`.
+Al usar `-a opencode`, el CLI de `skills.sh` instala los skills únicamente en `~/.config/opencode/skills/`, sin tocar `~/.claude/skills/`.
 
-### Opción A: Instalar todo (Skills + Slash Commands `/` + `AGENTS.md`)
-
-Desde una copia local del repositorio:
-
-```bash
-chmod +x ./skills-opencode/install.sh
-./skills-opencode/install.sh
-```
-
-### Opción B: Instalar solo los skills con `npx skills`
+### 1. Instalar todos los skills con `npx skills`
 
 ```bash
 npx skills add lsosorio/skills-opencode -a opencode -g
 ```
 
+O instalar uno específico:
+
+```bash
+npx skills add lsosorio/skills-opencode --skill iniciar-repo-ia -a opencode -g
+npx skills add lsosorio/skills-opencode --skill nueva-tarea-odd -a opencode -g
+npx skills add lsosorio/skills-opencode --skill cerrar-tarea-pr -a opencode -g
+```
+
+### 2. Instalar las instrucciones globales (`AGENTS.md`)
+
+```bash
+mkdir -p ~/.config/opencode
+cp AGENTS.md ~/.config/opencode/AGENTS.md
+```
+
 ## Flujo de uso en OpenCode
 
+Después de instalar, reinicia `opencode` y solicita el skill correspondiente en el chat:
+
 1. **Crear o configurar el proyecto (`iniciar-repo-ia`):**
-   > *"Inicia el repo para el taller 1 con `iniciar-repo-ia`."*
-   *(Si eres un compañero que acaba de clonar el repositorio, corre `./scripts/setup.sh`).*
+   > *"Usa `iniciar-repo-ia` para iniciar el repositorio del proyecto."*
+   *(Si eres un integrante del equipo que acaba de clonar el repositorio, corre `./scripts/setup.sh`).*
 
-2. **Empezar un punto o requerimiento (`nueva-tarea-odd`):**
-   > *"Usa `nueva-tarea-odd` para implementar el comparador de embeddings coseno."*
+2. **Especificar e implementar un requerimiento (`nueva-tarea-odd`):**
+   > *"Usa `nueva-tarea-odd` para implementar el módulo de procesamiento y evaluación."*
 
-3. **Entregar la tarea al equipo (`cerrar-tarea-pr`):**
-   > *"Usa `cerrar-tarea-pr` para cerrar la tarea y abrir el PR."*
+3. **Cerrar la tarea y abrir el Pull Request (`cerrar-tarea-pr`):**
+   > *"Usa `cerrar-tarea-pr` para validar cambios, sincronizar Engram y abrir el PR."*

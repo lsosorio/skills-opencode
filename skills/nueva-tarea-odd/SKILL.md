@@ -8,7 +8,7 @@ description: Inicia, especifica e implementa un nuevo requerimiento o experiment
 Guía el ciclo completo de un requerimiento bajo **ODD (Organic-Driven Development)** en proyectos de Inteligencia Artificial con **`uv`**, **Engram** y **GGA**: primero especifica y valida el diseño en `odd/tasks/`, luego implementa de forma incremental en `src/` y `tests/`.
 
 - **Regla de oro:** nunca escribas ni modifiques código en `src/` o `tests/` antes de que el documento `odd/tasks/<NN>-<slug>.md` esté creado y aprobado por el usuario.
-- **Restricciones del curso:** prohibido crear archivos `.ipynb`, usar `pip install` o dejar funciones sin *type hints*.
+- **Restricciones del entorno:** prohibido crear archivos `.ipynb`, usar `pip install` o dejar funciones sin *type hints*.
 
 ## 1. Contexto y sincronización inicial
 
