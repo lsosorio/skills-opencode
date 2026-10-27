@@ -1,25 +1,25 @@
-# Skills para OpenCode + DeepSeek (Python e IA con `uv`)
+# OpenCode + DeepSeek Skills (Python & AI with `uv`)
 
-Colección de skills e instrucciones globales para **OpenCode** con **DeepSeek**, orientados al desarrollo de proyectos de **Python e Inteligencia Artificial** usando exclusivamente **`uv`**, buenas prácticas de ingeniería de software, **ODD (`odd/tasks`)**, **Engram** y **GGA**.
+Collection of skills and global instructions for **OpenCode** powered by **DeepSeek**, tailored for **Python and Artificial Intelligence** projects using **`uv`**, pragmatic software engineering best practices, **ODD (`odd/tasks`)**, **Engram**, and **GGA**.
 
-## Estructura
+## Repository structure
 
-- `AGENTS.md`: Instrucciones globales de idioma, criterio, eficiencia, escritura y flujo de trabajo para `~/.config/opencode/AGENTS.md`.
-- `skills/iniciar-repo-ia/SKILL.md`: Inicializa repositorios privados y workspaces en Python con `uv` (sin `pip` ni Jupyter Notebooks), configurado con `ruff`, `pytest`, `AGENTS.md`, Engram compartido en equipo, `odd/tasks/_plantilla.md`, GGA (DeepSeek) y GitHub Actions CI.
-- `skills/nueva-tarea-odd/SKILL.md`: Especifica un nuevo requerimiento bajo ODD en `odd/tasks/<NN>-<slug>.md`, crea su rama `feat/<NN>-<slug>`, pide confirmación antes de programar e implementa tarea por tarea con `ruff` y `pytest`.
-- `skills/cerrar-tarea-pr/SKILL.md`: Audita calidad (`ruff` + `pytest` + cero `.ipynb`/secretos), cierra el documento en `odd/tasks/`, exporta la memoria del equipo con `engram sync`, hace el commit validado por GGA y abre el Pull Request en GitHub.
+- `AGENTS.md`: Global instructions covering language, judgment, efficiency, writing style, and Python/AI workflow for `~/.config/opencode/AGENTS.md`.
+- `skills/iniciar-repo-ia/SKILL.md`: Bootstraps private repositories and workspaces in Python with `uv` (no `pip`, no Jupyter Notebooks), preconfigured with `ruff`, `pytest`, `CONSTITUTION.md`, `AGENTS.md`, shared team memory via Engram, `odd/tasks/_template.md`, GGA (DeepSeek), and GitHub Actions CI.
+- `skills/nueva-tarea-odd/SKILL.md`: Specifies a new requirement under ODD in `odd/tasks/<NN>-<slug>.md`, creates its `feat/<NN>-<slug>` branch, requests confirmation before coding, and implements task by task with `ruff` and `pytest`.
+- `skills/cerrar-tarea-pr/SKILL.md`: Audits code quality (`ruff` + `pytest` + zero `.ipynb`/secrets), completes the document in `odd/tasks/`, exports team memory with `engram sync`, creates a GGA-validated commit, and opens a GitHub Pull Request.
 
-## Instalación
+## Installation
 
-Al usar `-a opencode`, el CLI de `skills.sh` instala los skills únicamente en `~/.config/opencode/skills/`, sin tocar `~/.claude/skills/`.
+Using `-a opencode` installs the skills exclusively into `~/.config/opencode/skills/` without touching `~/.claude/skills/`.
 
-### 1. Instalar todos los skills con `npx skills`
+### 1. Install all skills with `npx skills`
 
 ```bash
 npx skills add lsosorio/skills-opencode -a opencode -g
 ```
 
-O instalar uno específico:
+Or install a single skill:
 
 ```bash
 npx skills add lsosorio/skills-opencode --skill iniciar-repo-ia -a opencode -g
@@ -27,23 +27,23 @@ npx skills add lsosorio/skills-opencode --skill nueva-tarea-odd -a opencode -g
 npx skills add lsosorio/skills-opencode --skill cerrar-tarea-pr -a opencode -g
 ```
 
-### 2. Instalar las instrucciones globales (`AGENTS.md`)
+### 2. Install global instructions (`AGENTS.md`)
 
 ```bash
 mkdir -p ~/.config/opencode
 cp AGENTS.md ~/.config/opencode/AGENTS.md
 ```
 
-## Flujo de uso en OpenCode
+## Usage workflow in OpenCode
 
-Después de instalar, reinicia `opencode` y solicita el skill correspondiente en el chat:
+After installing, restart `opencode` and invoke the desired skill in chat:
 
-1. **Crear o configurar el proyecto (`iniciar-repo-ia`):**
-   > *"Usa `iniciar-repo-ia` para iniciar el repositorio del proyecto."*
-   *(Si eres un integrante del equipo que acaba de clonar el repositorio, corre `./scripts/setup.sh`).*
+1. **Create or bootstrap a project (`iniciar-repo-ia`):**
+   > *"Use `iniciar-repo-ia` to initialize the repository."*
+   *(Teammates cloning an existing repository only need to run `./scripts/setup.sh`).*
 
-2. **Especificar e implementar un requerimiento (`nueva-tarea-odd`):**
-   > *"Usa `nueva-tarea-odd` para implementar el módulo de procesamiento y evaluación."*
+2. **Specify and implement a requirement (`nueva-tarea-odd`):**
+   > *"Use `nueva-tarea-odd` to implement the semantic similarity module."*
 
-3. **Cerrar la tarea y abrir el Pull Request (`cerrar-tarea-pr`):**
-   > *"Usa `cerrar-tarea-pr` para validar cambios, sincronizar Engram y abrir el PR."*
+3. **Close the task and open a Pull Request (`cerrar-tarea-pr`):**
+   > *"Use `cerrar-tarea-pr` to validate changes, sync Engram, and open the PR."*

@@ -1,65 +1,66 @@
 ---
 name: iniciar-repo-ia
-description: Inicializa un repositorio o workspace de Python e Inteligencia Artificial con uv para OpenCode y DeepSeek (iniciar repo, empezar proyecto Python/IA, nuevo workspace uv). Configura git, remoto privado en GitHub, proyecto empaquetado con uv (sin pip ni Jupyter Notebooks), ruff, pytest, AGENTS.md con buenas prácticas de ingeniería de software, Engram, odd/tasks, GGA con DeepSeek y CI en GitHub Actions.
+description: Bootstraps a Python and Artificial Intelligence repository or workspace with uv for OpenCode and DeepSeek (init repo, start AI project, new uv workspace, iniciar repo). Configures git, private GitHub remote, packaged uv project (no pip, no Jupyter Notebooks), ruff, pytest, CONSTITUTION.md, AGENTS.md with software engineering rules, shared Engram memory, odd/tasks, GGA with DeepSeek, and GitHub Actions CI.
 ---
 
 # iniciar-repo-ia
 
-Deja un repositorio (o un workspace con varios) de Python e Inteligencia Artificial listo para trabajar con **OpenCode**, **DeepSeek**, **`uv`**, **Engram**, **GGA** y **ODD**. Corre en el directorio actual.
+Leaves a Python and Artificial Intelligence repository (or multi-repo workspace) ready to work with **OpenCode**, **DeepSeek**, **`uv`**, **Engram**, **GGA**, and **ODD**. Runs in the current directory.
 
-- **Idempotente:** si un paso ya está hecho, se salta. Nunca sobrescribe un archivo existente: lo muestra y pregunta si se completa o se deja.
-- **Con confirmación:** crear el remoto en GitHub, el primer commit y el push se preguntan antes de ejecutar. Lo demás se hace sin preguntar.
-- **Restricciones duras del entorno:**
-  - Todo el manejo de Python, paquetes y ejecución se hace con **`uv`** (`uv init`, `uv add`, `uv sync`, `uv run`). **Prohibido usar `pip install`, `conda`, `poetry` o `requirements.txt`.**
-  - **Prohibido usar Jupyter Notebooks (`.ipynb`)** o dependencias asociadas (`jupyter`, `ipykernel`, `notebook`). Todo el código vive en módulos de Python dentro de `src/` y pruebas en `tests/`.
+- **Idempotent:** if a step is already done, skip it. Never overwrite an existing file: show it and ask whether to complete it or leave it as-is.
+- **With confirmation:** creating the GitHub remote, making the initial commit, and pushing require confirmation before execution. Everything else runs without asking.
+- **Hard environment constraints:**
+  - All Python environment management, dependency installation, and execution use **`uv`** (`uv init`, `uv add`, `uv sync`, `uv run`). **Never use `pip install`, `conda`, `poetry`, or `requirements.txt`.**
+  - **Never use Jupyter Notebooks (`.ipynb`)** or notebook dependencies (`jupyter`, `ipykernel`, `notebook`). All source code lives in Python modules under `src/` and tests under `tests/`.
+  - All code identifiers, types, docstrings, comments, and test names are written in **English**.
 
-## 1. Datos
+## 1. Project inputs
 
-Toma de la petición lo que venga y pregunta el resto en **un solo mensaje**:
+Extract whatever is already provided in the user's request and ask for the missing items in **a single message**:
 
-- **Nombre** del proyecto. De él salen:
-  - El *slug* (minúsculas y guiones, sin espacios: `Servicio Embeddings` → `servicio-embeddings`), que usan Engram, la carpeta y el repo de GitHub.
-  - El *paquete* Python (minúsculas y guiones bajos: `servicio_embeddings`), que vive en `src/<paquete>/`.
-- **Qué es**, en una o dos líneas.
-- **Tipo:**
-  - *Repo suelto* (por defecto).
-  - *Repo dentro de un workspace:* la carpeta padre agrupa varios repos de un mismo proyecto. Se corre dentro del repo; si la raíz aún no tiene `AGENTS.md` ni `.engram/`, los crea este skill (pasos 4 y 5).
-  - *Workspace con repos existentes:* se corre en la raíz.
-- **Remoto:** ¿ya existe? Si no, se ofrece crearlo **privado** (`--private`) en el paso 10.
+- **Project name.** From this derive:
+  - The *slug* (lowercase and hyphens, no spaces: `Embedding Service` → `embedding-service`), used by Engram, the directory, and the GitHub repo.
+  - The Python *package* name (lowercase and underscores: `embedding_service`), located at `src/<package>/`.
+- **What it is**, in one or two lines.
+- **Type:**
+  - *Standalone repo* (default).
+  - *Repo inside a workspace:* the parent directory groups multiple repos for a single product. Runs inside the repo; if the root does not yet have `AGENTS.md` or `.engram/`, this skill creates them (steps 4 and 5).
+  - *Workspace with existing repos:* runs at the workspace root.
+- **Remote:** does it already exist? If not, offer to create it as **private** (`--private`) in step 10.
 
-Si el nombre de la carpeta actual tiene espacios, avisa: los espacios en rutas obligan a entrecomillar en todos los scripts. Propón renombrarla al *slug* antes de seguir.
+If the current directory name contains spaces, warn the user: spaces in paths require quoting across all scripts. Propose renaming the directory to the *slug* before continuing.
 
-## 2. Inventario
+## 2. Environment inventory
 
-Ejecuta esta verificación antes de crear o modificar archivos:
+Run this check before creating or modifying any files:
 
 ```bash
-for t in git gh uv engram gga opencode docker secret-tool; do command -v "$t" >/dev/null && echo "ok  $t" || echo "falta $t"; done
-gh auth status >/dev/null 2>&1 && echo "ok  gh autenticado" || echo "falta gh auth login"
+for t in git gh uv engram gga opencode docker secret-tool; do command -v "$t" >/dev/null && echo "ok  $t" || echo "missing $t"; done
+gh auth status >/dev/null 2>&1 && echo "ok  gh authenticated" || echo "missing gh auth login"
 ls -la
 ```
 
-- **Sin `git` o sin `uv`, se detiene antes de tocar archivos** y entrega los comandos de instalación (abajo).
-- **Sin `gh` o sin su sesión activa, y con remoto pedido, se detiene antes de crear archivos** y le da al usuario los pasos de abajo. Enterarse al final deja el push y el secreto del CI pendientes. Sin remoto pedido, sigue y lo anota como pendiente.
-- Lo demás que falte se reporta al final; no detiene los demás pasos.
-- Archivos que ya existan (`AGENTS.md`, `pyproject.toml`, `.gga`, `.engram/`, `.gitignore`, `.dockerignore`, `.github/workflows/`): no se tocan sin preguntar.
-- **Workspace:** los repos son las carpetas donde vive el `pyproject.toml` o `.git`, no las de primer nivel. Localízalos con:
+- **Without `git` or `uv`, stop before touching files** and provide the installation commands below.
+- **Without `gh` or an active `gh` session, and with a remote requested, stop before creating files** and provide the setup commands below. Finding out at the end leaves the push and CI secret incomplete. If no remote was requested, continue and log it as pending.
+- Any other missing tool is reported at the end and does not block the remaining steps.
+- Existing files (`CONSTITUTION.md`, `AGENTS.md`, `pyproject.toml`, `.gga`, `.engram/`, `.gitignore`, `.dockerignore`, `.github/workflows/`): never overwrite without asking.
+- **Workspace:** repos are directories containing `pyproject.toml` or `.git`, not necessarily top-level folders. Locate them with:
 
   ```bash
   find . -maxdepth 4 -type d -name .git -not -path '*/worktrees/*' -not -path '*/.venv/*'
   ```
 
-  Los pasos 3 a 9 se hacen **en cada repo**. En la raíz del workspace solo van `AGENTS.md` general (paso 4) y Engram (paso 5).
+  Steps 3 through 9 run **in each repo**. Only the shared `AGENTS.md` (step 4) and Engram (step 5) go at the workspace root.
 
-### Instalar `uv` (si falta)
+### Install `uv` (if missing)
 
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-### Instalar `gh` y abrir su sesión (si falta)
+### Install `gh` and authenticate (if missing)
 
-Método oficial (nunca con snap). En Debian y Ubuntu:
+Official method (never use snap). On Debian and Ubuntu:
 
 ```bash
 (type -p wget >/dev/null || (sudo apt update && sudo apt install wget -y)) \
@@ -73,7 +74,7 @@ Método oficial (nunca con snap). En Debian y Ubuntu:
 	&& sudo apt install gh -y
 ```
 
-Después, iniciar sesión con permiso `workflow` (obligatorio porque el primer push incluye `.github/workflows/`):
+Then authenticate with the `workflow` scope (required because the initial push includes `.github/workflows/`):
 
 ```bash
 gh auth login --hostname github.com --git-protocol https --web --scopes workflow
@@ -81,25 +82,25 @@ gh auth setup-git
 gh auth status
 ```
 
-## 3. Git y entorno Python con `uv`
+## 3. Git and Python environment with `uv`
 
-### 3.1. Inicializar Git
+### 3.1. Initialize Git
 
 ```bash
 git rev-parse --is-inside-work-tree 2>/dev/null || git init -b main
 git status >/dev/null 2>&1 || git config --global --add safe.directory "$(pwd)"
 ```
 
-### 3.2. Inicializar paquete Python con `uv`
+### 3.2. Initialize packaged Python project with `uv`
 
-Si no existe `pyproject.toml`, inicializa un proyecto empaquetado en `src/<paquete>/` e instala las herramientas de desarrollo (`ruff` y `pytest`):
+If `pyproject.toml` does not exist, initialize a packaged project in `src/<package>/` and add the development tools (`ruff` and `pytest`):
 
 ```bash
 uv init --package --name "<slug>" --vcs none
 uv add --dev ruff pytest
 ```
 
-Si `tests/` no existe, crea una prueba base para que `uv run pytest` verifique el paquete desde el primer commit:
+If `tests/` does not exist, create a baseline smoke test so `uv run pytest` validates the package from the initial commit:
 
 ```bash
 mkdir -p tests
@@ -107,7 +108,7 @@ mkdir -p tests
 [ -f tests/test_smoke.py ] || printf 'def test_smoke() -> None:\n    assert True\n' > tests/test_smoke.py
 ```
 
-Agrega al final de `pyproject.toml` la configuración de `ruff` y `pytest` si aún no está presente:
+Append `ruff` and `pytest` settings to `pyproject.toml` if not already present:
 
 ```toml
 [tool.ruff]
@@ -122,21 +123,21 @@ testpaths = ["tests"]
 pythonpath = ["src"]
 ```
 
-Verifica que todo corra limpio con `uv`:
+Verify that both tools pass via `uv`:
 
 ```bash
 uv run ruff check .
 uv run pytest
 ```
 
-### 3.3. `.gitignore` y `.env.example`
+### 3.3. `.gitignore`, data directories, and `.env.example`
 
-Asegura que `.gitignore` cubra Python, `uv`, secretos, notebooks bloqueados y artefactos pesados de IA (pesos de modelos, cachés y datasets crudos):
+Ensure `.gitignore` covers Python, `uv`, secrets, blocked notebooks, and heavy AI artifacts (model weights, caches, and raw/processed datasets):
 
 ```bash
-agregar() { grep -qxF "$1" "$2" 2>/dev/null || echo "$1" >> "$2"; }
+add_line() { grep -qxF "$1" "$2" 2>/dev/null || echo "$1" >> "$2"; }
 for l in \
-  '# Python y uv' \
+  '# Python & uv' \
   '__pycache__/' \
   '*.py[cod]' \
   '*.so' \
@@ -149,16 +150,16 @@ for l in \
   '.pytest_cache/' \
   '.mypy_cache/' \
   '' \
-  '# Secretos' \
+  '# Secrets' \
   '.env' \
   '.env.*' \
   '!.env.example' \
   '' \
-  '# Prohibido subir notebooks' \
+  '# Notebooks are forbidden' \
   '*.ipynb' \
   '.ipynb_checkpoints/' \
   '' \
-  '# Artefactos y pesos de IA/LLMs' \
+  '# AI / LLM weights & artifacts' \
   '*.gguf' \
   '*.safetensors' \
   '*.bin' \
@@ -172,103 +173,174 @@ for l in \
   '!data/raw/.gitkeep' \
   'data/processed/*' \
   '!data/processed/.gitkeep'; do
-  [ -n "$l" ] && agregar "$l" .gitignore || echo "" >> .gitignore
+  [ -n "$l" ] && add_line "$l" .gitignore || echo "" >> .gitignore
 done
 mkdir -p data/raw data/processed
 [ -e data/raw/.gitkeep ] || touch data/raw/.gitkeep
 [ -e data/processed/.gitkeep ] || touch data/processed/.gitkeep
 ```
 
-Crea la plantilla `.env.example` sin valores reales:
+Create `.env.example` without real secret values:
 
 ```bash
 [ -f .env.example ] || cat << 'EOF' > .env.example
-# Variables de entorno. Copia este archivo a .env y completa los valores reales.
-# NUNCA subas el archivo .env al repositorio.
+# Environment variables. Copy this file to .env and fill in real values.
+# NEVER commit .env to the repository.
 DEEPSEEK_API_KEY=
 HF_TOKEN=
 EOF
 ```
 
-Para excluir algo solo en este clon local sin tocar el `.gitignore` versionado:
+To exclude paths locally in this clone only without modifying the tracked `.gitignore`:
 
 ```bash
-excluir() { f="$(git rev-parse --git-dir)/info/exclude"; grep -qxF "$1" "$f" 2>/dev/null || echo "$1" >> "$f"; }
+exclude_local() { f="$(git rev-parse --git-dir)/info/exclude"; grep -qxF "$1" "$f" 2>/dev/null || echo "$1" >> "$f"; }
 ```
 
-## 4. AGENTS.md (Contexto para OpenCode + Reglas para GGA)
+## 4. CONSTITUTION.md and AGENTS.md
 
-OpenCode lee `AGENTS.md` como archivo principal de contexto y GGA revisa cada commit contra él. Mantenlo por debajo de 200 líneas, en viñetas y con las palabras clave de GGA en inglés tal cual: `REJECT if` (falla el commit), `REQUIRE` (falla si falta) y `PREFER` (sugiere, no falla).
+Separating the architectural contract (`CONSTITUTION.md`) from the diff-level review rules (`AGENTS.md`) keeps `AGENTS.md` fast and under GGA's 200-line limit while giving OpenCode a clear, immutable set of engineering standards and a Definition of Done (DoD).
+
+### 4.1. `CONSTITUTION.md` (Project architectural contract)
+
+Create `CONSTITUTION.md` at the repository root:
 
 ```markdown
-# <Nombre>
+# Project Constitution — <Project Name>
 
-Estado: base activa
-Stack: Python (>=3.12) gestionado exclusivamente con `uv`.
+This is the supreme regulatory document and architectural contract for the project. Every piece of code, architectural decision, and tool usage must strictly adhere to the rules defined here. Alterations to this document require explicit human approval.
 
-## Qué es
-<descripción del paso 1>
+---
 
-## Cómo se ejecuta
-- Sincronizar entorno: `uv sync`
-- Importar memoria del equipo (al clonar o tras `git pull`): `engram sync --import`
-- Exportar memoria nueva al repo (antes de hacer commit/push): `engram sync && git add .engram/`
-- Ejecutar módulo principal: `uv run <slug>` (o `uv run python -m <paquete>`)
-- Linter y formato: `uv run ruff check .` y `uv run ruff format --check .`
-- Pruebas: `uv run pytest`
+## 1. Vision & Core Principles
+* **Core Value:** Reproducibility, modularity, and pragmatic simplicity in Python and AI engineering.
+* **Feature Strategy:** Smallest Useful Slice (SUS). Build and verify the minimum modular unit required to deliver value, then iterate. Do not over-engineer.
+* **Refactoring Rule:** Leave code cleaner than you found it, but avoid scope creep. Do not touch files unrelated to the active ODD task.
 
-## Estructura base
-- `src/<paquete>/`: código fuente modular del proyecto.
-- `tests/`: pruebas unitarias con `pytest`.
-- `data/raw/` y `data/processed/`: datos de entrada y procesados (ignorados en git salvo `.gitkeep`).
-- `odd/tasks/`: especificaciones de tareas y features (basadas en `odd/tasks/_plantilla.md`).
-- `.engram/`: memoria compartida del proyecto (`config.json`, `manifest.json` y `chunks/`).
-- `scripts/setup.sh`: script de onboarding para configurar entorno y hooks locales tras clonar.
+---
 
-## Flujo de trabajo en equipo y ODD
-- **Onboarding al clonar por primera vez:** ejecutar `./scripts/setup.sh` (sincroniza `uv`, importa memoria de Engram e instala los hooks locales `gga` y `post-merge`).
-- **Especificar antes de programar (ODD):** usar el skill `nueva-tarea-odd` (o crear primero `odd/tasks/<NN>-<slug>.md` siguiendo `odd/tasks/_plantilla.md`) y validarlo con el usuario antes de escribir código en `src/`.
-- **Cierre de cada tarea:** usar el skill `cerrar-tarea-pr` (o correr `uv run ruff check .`, `uv run pytest`, registrar la evidencia en `odd/tasks/` y ejecutar `engram sync && git add .engram/` antes del commit).
+## 2. Technical Stack & Architectural Standards
+* **Language & Runtime:** Python >= 3.12 managed exclusively via `uv` (`pyproject.toml` + `uv.lock`).
+* **Quality & Testing Tools:** `ruff` (linter and formatter) and `pytest` (unit testing).
+* **Forbidden Tooling:** `pip install`, `conda`, `poetry`, `requirements.txt`, and Jupyter Notebooks (`*.ipynb`).
 
-## Decisiones
-Cada decisión técnica o de diseño entra aquí con su fecha y su motivo.
+### Architectural Rules
+* **Folder Structure:** Pragmatic modular package under `src/<package>/` and unit tests under `tests/`. Do not force full Clean Architecture layers unless the domain complexity justifies it.
+* **Decoupling & State:** Keep functions pure where possible. Inject external clients (LLM APIs, databases, model loaders) and configuration via parameters so modules remain testable offline.
+* **Dependency Management:** Never introduce new third-party libraries without explicit validation in the `odd/tasks/` specification and installation via `uv add`. Prefer Python standard library solutions when sufficient.
 
-## Reglas de código (GGA)
+---
 
-REJECT if:
-- Archivos de Jupyter Notebook (`*.ipynb`) o dependencias de Jupyter (`jupyter`, `ipykernel`, `notebook`) en `pyproject.toml`
-- Uso de `pip install`, `conda`, `poetry` o archivos `requirements.txt` → usar exclusivamente `uv add` y `uv run`
-- Secretos, API keys (`DEEPSEEK_API_KEY`, `HF_TOKEN`), tokens o contraseñas en código o en archivos versionados
-- Pesos de modelos (`*.bin`, `*.pt`, `*.safetensors`, `*.gguf`) o datasets pesados versionados en git
-- Funciones o métodos sin anotaciones de tipos (*type hints*) en sus parámetros y valor de retorno
-- Manejo de errores vacío (`except: pass`) o que descarta la excepción sin registrarla ni propagarla
-- Nombres de modelos, hiperparámetros, rutas o URLs harcodeados dentro de funciones en lugar de constantes o configuración
-- Código comentado dejado "por si acaso" o `print()` de depuración olvidados
-- Imagen de contenedor con etiqueta `latest`, sin etiqueta, o que corre como `root`
+## 3. Quality & Testing Guidelines
+* **Testing Strategy:** Unit testing with `pytest` (`uv run pytest`). External APIs, LLMs, and heavy models must be mocked or stubbed in unit tests.
+* **Type Safety:** Explicit type hints are mandatory on all function and method signatures.
+* **Error Handling:** Never catch exceptions silently (`except: pass`). Raise explicit, typed exceptions or log errors with actionable context.
 
-REQUIRE:
-- Tipado explícito en todas las firmas de funciones y métodos
-- Lectura de variables de entorno y secretos desde configuración centralizada, nunca dispersa en la lógica
+---
 
-PREFER:
-- Principio de responsabilidad única (SRP): cada módulo y función hace una sola cosa bien; funciones cortas con un solo nivel de abstracción
-- Simplicidad (KISS y YAGNI): estructura modular limpia sin capas burocráticas (no forzar Clean Architecture completa si no aporta valor real); crear abstracciones o clases solo cuando exista un segundo uso o para aislar pruebas
-- Inyección de dependencias por parámetro: recibir clientes externos (APIs, LLMs) o configuración como argumentos para probar con `pytest` sin llamadas reales a red
-- Nombres descriptivos que digan qué hacen o qué contienen, sin abreviaturas crípticas (`tmp`, `aux`, `df`, `x1`)
+## 4. Security, Data & Artifact Compliance
+* **Secret Management:** Never hardcode secrets, API keys (`DEEPSEEK_API_KEY`, `HF_TOKEN`), or credentials in source code or tracked files. Load them from `.env` (untracked) and document keys in `.env.example`.
+* **Model Weights & Datasets:** Never commit model weights (`*.gguf`, `*.safetensors`, `*.bin`, `*.pt`, `*.pth`, `*.onnx`) or raw/processed datasets (`data/raw/*`, `data/processed/*`) to git.
+* **Language Standard:** All source code, identifiers, types, docstrings, code comments, and tests must be written in English.
+
+---
+
+## 5. AI Agent Rules & Behavior (OpenCode + DeepSeek)
+* **Context Preservation:** Always read `CONSTITUTION.md`, `AGENTS.md`, `odd/tasks/`, and shared `.engram/` memory before proposing or writing changes.
+* **ODD First:** Never write or modify code in `src/` or `tests/` for a new feature without an approved specification in `odd/tasks/<NN>-<slug>.md`.
+* **Modification Boundaries:** Only modify files relevant to the current task. Always write complete, valid code when editing files—never use truncation comments (`# ...`).
+* **Verification:** Always run `uv run ruff check .`, `uv run ruff format --check .`, and `uv run pytest` before declaring a task finished.
+* **Tone & Communication:** Be concise and direct. Provide code changes or command outputs without chat filler.
+
+---
+
+## 6. Definition of Done (DoD)
+A task or pull request is strictly "Done" only when:
+1. [ ] Code adheres completely to this `CONSTITUTION.md` and `AGENTS.md`.
+2. [ ] All automated tests pass (`uv run pytest`).
+3. [ ] Code is linted and formatted with zero warnings (`uv run ruff check .` and `uv run ruff format --check .`).
+4. [ ] The task specification in `odd/tasks/<NN>-<slug>.md` is marked `completed` with real verification evidence.
+5. [ ] Project memory is saved and exported via `engram sync` into `.engram/chunks/`.
 ```
 
-En un **workspace**: crea un `AGENTS.md` en la raíz solo con el contexto común y una tabla de repos con su `Estado` (sin bloque de GGA), y un `AGENTS.md` completo por cada repo con la plantilla de arriba.
+### 4.2. `AGENTS.md` (OpenCode project context + GGA review rules)
 
-## 5. Engram (Memoria compartida en el proyecto)
+OpenCode reads `AGENTS.md` as its primary project context file, and GGA audits every commit against it. Keep it under 200 lines, referencing `@CONSTITUTION.md` and formatted as bullet points using GGA's exact keywords: `REJECT if` (fails the commit), `REQUIRE` (fails if missing), and `PREFER` (suggests without failing).
+
+```markdown
+# <Project Name>
+
+Status: active baseline
+Stack: Python (>=3.12) managed exclusively with `uv`.
+
+@CONSTITUTION.md
+
+## Overview
+<description from step 1>
+
+## Commands
+- Sync environment: `uv sync`
+- Import team memory (on clone or after `git pull`): `engram sync --import`
+- Export new memory to repo (before commit/push): `engram sync && git add .engram/`
+- Run main entry point: `uv run <slug>` (or `uv run python -m <package>`)
+- Lint and format: `uv run ruff check .` and `uv run ruff format --check .`
+- Run tests: `uv run pytest`
+
+## Project structure
+- `CONSTITUTION.md`: supreme architectural contract and Definition of Done (DoD).
+- `src/<package>/`: modular Python source code.
+- `tests/`: unit tests with `pytest`.
+- `data/raw/` and `data/processed/`: input and processed data (ignored in git except `.gitkeep`).
+- `odd/tasks/`: task and feature specifications (based on `odd/tasks/_template.md`).
+- `.engram/`: shared project memory (`config.json`, `manifest.json`, and `chunks/`).
+- `scripts/setup.sh`: team onboarding script to configure the local environment and git hooks after cloning.
+
+## Team workflow and ODD
+- **First-time clone onboarding:** run `./scripts/setup.sh` (syncs `uv`, imports Engram memory, and installs local `gga` and `post-merge` hooks).
+- **Specify before coding (ODD):** use the `nueva-tarea-odd` skill (or create `odd/tasks/<NN>-<slug>.md` from `odd/tasks/_template.md`) and get user approval before writing code in `src/`.
+- **Closing a task:** use the `cerrar-tarea-pr` skill (or run `uv run ruff check .`, `uv run pytest`, record verification evidence in `odd/tasks/`, and run `engram sync && git add .engram/` before committing).
+
+## Architectural decisions
+Record every significant design decision here with its date and rationale.
+
+## Code review rules (GGA)
+
+REJECT if:
+- Jupyter Notebook files (`*.ipynb`) or Jupyter dependencies (`jupyter`, `ipykernel`, `notebook`) in `pyproject.toml`
+- Usage of `pip install`, `conda`, `poetry`, or `requirements.txt` files → use `uv add` and `uv run` exclusively
+- Secrets, API keys (`DEEPSEEK_API_KEY`, `HF_TOKEN`), tokens, or passwords in code or tracked configuration files
+- Model weights (`*.bin`, `*.pt`, `*.safetensors`, `*.gguf`) or large datasets committed to git
+- Functions or methods missing explicit type hints on parameters and return values
+- Non-English identifiers (variables, functions, classes, modules, or test names written in Spanish or Spanglish)
+- Empty error handling (`except: pass`) or catching exceptions without logging or re-raising
+- Hardcoded model names, hyperparameters, file paths, or URLs inside functions instead of constants or centralized configuration
+- Commented-out dead code left "just in case" or leftover debug `print()` statements
+- Container images using the `latest` tag, missing a tag, or running as `root`
+
+REQUIRE:
+- Explicit type hints on all function and method signatures
+- English naming for all source code identifiers, comments, docstrings, and tests
+- Environment variables and secrets loaded through centralized configuration, never scattered across logic
+
+PREFER:
+- Single Responsibility Principle (SRP): each module and function does one thing well; short functions at a single level of abstraction
+- Simplicity (KISS and YAGNI): clean modular structure without bureaucratic boilerplate (do not force full Clean Architecture layers unless justified); introduce abstractions or classes only when a second real use exists or to isolate tests
+- Dependency injection via parameters: pass external clients (APIs, LLMs) or configuration as arguments so `pytest` tests can use offline mocks/stubs
+- Descriptive names that express intent, avoiding cryptic abbreviations (`tmp`, `aux`, `df`, `x1`)
+```
+
+In a **workspace**: create an `AGENTS.md` at the root containing only shared context and a table of repos with their `Status` (without the GGA block), plus a full `AGENTS.md` inside each repo using the template above.
+
+## 5. Engram (Shared project memory)
 
 ```bash
 engram init <slug>
 ```
 
-- **Memoria compartida por Git (`.engram/`):** `.engram/config.json`, `.engram/manifest.json` y `.engram/chunks/*.jsonl.gz` **se versionan** dentro del repositorio. Así todo el equipo comparte y actualiza la base de datos de conocimiento del proyecto sin conflictos binarios de SQLite:
-  - Antes de subir cambios: `engram sync` exporta las memorias nuevas a `.engram/chunks/` (revisar antes de hacer `git add .engram/` porque lo subido queda en el historial).
-  - Al bajar cambios del equipo: `engram sync --import` incorpora los nuevos chunks de `.engram/chunks/` a la base local de cada integrante.
-- **Automatización al hacer `git pull` (`post-merge` hook) y script de onboarding (`scripts/setup.sh`):** crea `scripts/setup.sh` versionado y ejecútalo para que tanto quien inicia el repo como cualquier compañero que lo clone después quede con `uv`, `engram`, `gga` y el hook `post-merge` configurados de una vez:
+- **Git-shared memory (`.engram/`):** `.engram/config.json`, `.engram/manifest.json`, and `.engram/chunks/*.jsonl.gz` **are tracked in git**. This lets the entire team share and incrementally update the project's knowledge base without binary SQLite merge conflicts:
+  - Before pushing changes: `engram sync` exports new observations into `.engram/chunks/` (review before `git add .engram/` because committed chunks stay in git history).
+  - After pulling team changes: `engram sync --import` imports new chunks from `.engram/chunks/` into each teammate's local store.
+- **Automatic import on `git pull` (`post-merge` hook) and onboarding script (`scripts/setup.sh`):** create the tracked `scripts/setup.sh` script and run it so both the repo creator and any teammate who clones the repo later get `uv`, `engram`, `gga`, and the `post-merge` hook configured in one command:
 
   ```bash
   mkdir -p scripts
@@ -282,73 +354,74 @@ engram init <slug>
   [ -f "$HOOK" ] || printf '#!/usr/bin/env bash\n' > "$HOOK"
   grep -q 'engram sync --import' "$HOOK" 2>/dev/null || printf 'command -v engram >/dev/null 2>&1 && engram sync --import >/dev/null 2>&1 || true\n' >> "$HOOK"
   chmod +x "$HOOK"
-  echo "Entorno y hooks configurados."
+  echo "Environment and git hooks configured."
   EOF
   chmod +x scripts/setup.sh
   ./scripts/setup.sh
   ```
 
-- **Workspace:** `engram init <slug>` en la raíz **y** en cada repo, con el **mismo** nombre. Pregunta cuál repo sincroniza `.engram/chunks/`. En los demás, agrega `.engram/chunks/` y `.engram/manifest.json` a su `.gitignore` para evitar copias desincronizadas.
-- **Repo dentro de un workspace:** el nombre de Engram es el del workspace, no el del repo. Si la raíz ya tiene `.engram/config.json`, toma el nombre de ahí; si no, ejecuta `engram init <slug-workspace>` en la raíz primero y luego en el repo.
+- **Workspace:** run `engram init <slug>` at the root **and** in each repo using the **same** slug. Ask which repo syncs `.engram/chunks/`. In all other repos, add `.engram/chunks/` and `.engram/manifest.json` to `.gitignore` to avoid desynchronized exports.
+- **Repo inside a workspace:** the Engram project name is the workspace slug, not the individual repo slug. If the root already has `.engram/config.json`, read the name from there; otherwise run `engram init <workspace-slug>` at the root first, then in the repo.
 
-## 6. ODD (Especificaciones en `odd/tasks/`)
+## 6. ODD (Specifications in `odd/tasks/`)
 
-Crea el directorio `odd/tasks/` y la plantilla base `odd/tasks/_plantilla.md` para que todos los requerimientos del equipo sigan el mismo estándar:
+Create the `odd/tasks/` directory and the base template `odd/tasks/_template.md` so all team specifications follow a consistent format:
 
 ```bash
 mkdir -p odd/tasks
-[ -f odd/tasks/_plantilla.md ] || cat << 'EOF' > odd/tasks/_plantilla.md
-# <NN> - <Título de la funcionalidad o experimento>
+[ -f odd/tasks/_template.md ] || cat << 'EOF' > odd/tasks/_template.md
+# <NN> - <Feature or experiment title>
 
-Estado: propuesto | en progreso | completado
-Rama: `feat/<slug>`
+Status: proposed | in-progress | completed
+Branch: `feat/<NN>-<slug>`
 
-## 1. Objetivo
-<Qué problema o requerimiento resuelve en 1 o 2 líneas.>
+## 1. Objective
+<What problem or requirement this solves in 1 or 2 lines.>
 
-## 2. Especificación técnica (Entradas / Salidas)
-- **Módulo(s):** `src/<paquete>/<modulo>.py`
-- **Entradas:** <parámetros y tipos esperados>
-- **Salidas:** <tipo de retorno o estructura de datos>
-- **Dependencias / Configuración:** <modelos, hiperparámetros o clientes inyectados>
+## 2. Technical specification (Inputs / Outputs)
+- **Module(s):** `src/<package>/<module>.py`
+- **Inputs:** <expected parameters and types>
+- **Outputs:** <return type or data structure>
+- **Dependencies / Configuration:** <models, hyperparameters, or injected clients>
 
-## 3. Criterios de aceptación
-- [ ] <Comportamiento esperado en el caso normal>
-- [ ] <Manejo de casos borde o entradas inválidas>
-- [ ] Funciones tipadas (*type hints*) y probadas en `tests/test_<modulo>.py` sin llamadas reales a red
+## 3. Acceptance criteria
+- [ ] <Expected behavior on the happy path>
+- [ ] <Handling of edge cases or invalid inputs>
+- [ ] Explicitly typed functions (*type hints*) and isolated unit tests in `tests/test_<module>.py` without live network calls
 
-## 4. Tareas de implementación
-- [ ] **T1:** <Definir modelos de datos y firmas en `src/`>
-- [ ] **T2:** <Implementar lógica principal>
-- [ ] **T3:** <Escribir pruebas unitarias en `tests/`>
-- [ ] **T4:** <Verificar con `uv run ruff check .`, `uv run pytest` y exportar memoria con `engram sync`>
+## 4. Implementation tasks
+- [ ] **T1:** <Define data models and typed signatures in `src/`>
+- [ ] **T2:** <Implement core logic>
+- [ ] **T3:** <Write unit tests in `tests/`>
+- [ ] **T4:** <Verify with `uv run ruff check .`, `uv run pytest`, and export memory with `engram sync`>
 
-## 5. Evidencia de verificación
-- `uv run ruff check .` -> <resultado>
-- `uv run pytest` -> <resultado>
+## 5. Verification evidence
+- `uv run ruff check .` -> <result>
+- `uv run pytest` -> <result>
 EOF
 ```
 
-Los documentos de tareas (`odd/tasks/<NN>-<feature>.md`) se versionan junto con el código.
+Task documents (`odd/tasks/<NN>-<feature>.md`) are tracked in git alongside the code.
 
-## 7. GGA (Gentleman Guardian Angel con OpenCode + DeepSeek)
+## 7. GGA (Gentleman Guardian Angel with OpenCode + DeepSeek)
 
-Escribe `.gga` directo (sin `gga init`):
+Write `.gga` directly (do not run `gga init`):
 
 ```ini
-PROVIDER="opencode:deepseek/deepseek-chat"
+PROVIDER="opencode:deepseek/deepseek-flash"
 RULES_FILE="AGENTS.md"
 STRICT_MODE="true"
-EXCLUDE_PATTERNS="uv.lock,*.lock,.engram/*,*.jsonl.gz,*.min.js,*.min.css,*.map,*.svg,*.png,*.jpg,*.jpeg,*.gif,*.ico,*.pdf,*.woff,*.woff2"
+PR_BASE_BRANCH="main"
+EXCLUDE_PATTERNS="uv.lock,*.lock,.engram/*,*.jsonl.gz,*.jsonl,*.min.js,*.min.css,*.map,*.svg,*.png,*.jpg,*.jpeg,*.gif,*.ico,*.pdf,*.woff,*.woff2"
 ```
 
-Luego instala el hook y verifica la configuración (si `gga` está instalado en el sistema):
+Then install the pre-commit hook and verify configuration (if `gga` is installed):
 
 ```bash
 gga install && gga config
 ```
 
-`gga config` debe mostrar `PROVIDER: opencode:deepseek/deepseek-chat` y `RULES_FILE: AGENTS.md`. `.gga` se versiona.
+`gga config` must report `PROVIDER: opencode:deepseek/deepseek-flash` and `RULES_FILE: AGENTS.md`. `.gga` is tracked in git.
 
 ## 8. .dockerignore
 
@@ -369,6 +442,7 @@ __pycache__
 .mypy_cache
 tests
 data/raw
+data/processed
 *.gguf
 *.safetensors
 *.bin
@@ -377,9 +451,9 @@ data/raw
 *.onnx
 ```
 
-## 9. CI en GitHub Actions
+## 9. GitHub Actions CI
 
-Obtén las versiones vigentes al crear los workflows (no las dejes flotantes):
+Resolve current versions when creating the workflow files (do not leave floating tags):
 
 ```bash
 OC_VER=$(npm view opencode-ai version 2>/dev/null || echo "latest")
@@ -389,9 +463,9 @@ SETUP_UV=$(gh api repos/astral-sh/setup-uv/releases/latest --jq .tag_name 2>/dev
 echo "opencode=$OC_VER gga=${GGA_TAG:-main} checkout=${CHECKOUT:-v4} setup-uv=${SETUP_UV:-v5}"
 ```
 
-### 9.1. Calidad y pruebas con `uv` (`.github/workflows/ci.yml`)
+### 9.1. Code quality and tests with `uv` (`.github/workflows/ci.yml`)
 
-Reemplaza `<CHECKOUT>` (por ejemplo `v4`) y `<SETUP_UV>` (por ejemplo `v5`):
+Replace `<CHECKOUT>` (e.g., `v4`) and `<SETUP_UV>` (e.g., `v5`):
 
 ```yaml
 name: CI (uv + ruff + pytest)
@@ -409,41 +483,41 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  verificar:
+  verify:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@<CHECKOUT>
-      - name: Instalar uv
+      - name: Install uv
         uses: astral-sh/setup-uv@<SETUP_UV>
         with:
           enable-cache: true
-      - name: Sincronizar dependencias
+      - name: Sync dependencies
         run: uv sync --locked --all-groups
-      - name: Verificar que no existan notebooks ni requirements.txt
+      - name: Reject notebooks and requirements.txt
         run: |
           if find . -name "*.ipynb" -not -path "./.venv/*" | grep -q .; then
-            echo "Error: No se permiten archivos Jupyter Notebook (.ipynb)"
+            echo "Error: Jupyter Notebook files (.ipynb) are forbidden"
             exit 1
           fi
           if [ -f requirements.txt ]; then
-            echo "Error: Usa pyproject.toml y uv.lock en lugar de requirements.txt"
+            echo "Error: Use pyproject.toml and uv.lock instead of requirements.txt"
             exit 1
           fi
-      - name: Linter (Ruff)
+      - name: Lint (Ruff)
         run: uv run ruff check .
-      - name: Formato (Ruff)
+      - name: Format check (Ruff)
         run: uv run ruff format --check .
-      - name: Pruebas (Pytest)
+      - name: Unit tests (Pytest)
         run: uv run pytest
 ```
 
-### 9.2. Revisión de GGA con DeepSeek en cada PR (`.github/workflows/gga-review.yml`)
+### 9.2. GGA PR review with DeepSeek (`.github/workflows/gga-review.yml`)
 
-Reemplaza `<CHECKOUT>`, `<OC_VER>` y `<GGA_TAG>`:
+Replace `<CHECKOUT>`, `<OC_VER>`, and `<GGA_TAG>`:
 
 ```yaml
-name: Revisión GGA (DeepSeek)
+name: GGA Review (DeepSeek)
 
 on:
   pull_request:
@@ -457,7 +531,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  revisar:
+  review:
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -468,73 +542,73 @@ jobs:
       - uses: actions/checkout@<CHECKOUT>
         with:
           fetch-depth: 0
-      - name: Instalar OpenCode y GGA
+      - name: Install OpenCode and GGA
         run: |
           npm install -g opencode-ai@<OC_VER>
           git clone --depth 1 --branch <GGA_TAG> https://github.com/Gentleman-Programming/gentleman-guardian-angel.git "$RUNNER_TEMP/gga"
           chmod +x "$RUNNER_TEMP/gga/bin/gga"
           echo "$RUNNER_TEMP/gga/bin" >> "$GITHUB_PATH"
-      - name: Revisar los cambios del PR
+      - name: Review PR diff
         run: gga run --pr-mode --diff-only
 ```
 
-### 9.3. Secreto `DEEPSEEK_API_KEY` para el CI
+### 9.3. `DEEPSEEK_API_KEY` secret for CI
 
-El secreto `DEEPSEEK_API_KEY` se configura **después del push** (`gh secret set` requiere que exista el remoto). La clave nunca debe imprimirse en la conversación: vive en el llavero del sistema (`secret-tool`) y pasa por tubería directo a GitHub.
+Set the `DEEPSEEK_API_KEY` repository secret **after pushing** (`gh secret set` requires the remote repository to exist). The key must never appear in chat: it lives in the system keyring (`secret-tool`) and is piped directly to GitHub.
 
-1. Revisa si ya existe en el llavero, sin imprimir el valor:
+1. Check whether the key exists in the keyring without printing its value:
 
    ```bash
-   secret-tool lookup service deepseek-ci >/dev/null 2>&1 && echo "api key en el llavero" || echo "sin api key en el llavero"
+   secret-tool lookup service deepseek-ci >/dev/null 2>&1 && echo "api key in keyring" || echo "no api key in keyring"
    ```
 
-2. **Con clave en el llavero:** pregunta junto con el push (paso 10) y carga el secreto al repositorio:
+2. **If present in the keyring:** ask for confirmation together with the push (step 10) and upload the secret:
 
    ```bash
    secret-tool lookup service deepseek-ci | gh secret set DEEPSEEK_API_KEY
    gh secret list
    ```
 
-   `secret-tool lookup` solo se ejecuta con `|` hacia `gh secret set`, nunca solo.
+   `secret-tool lookup` must only be executed piped (`|`) into `gh secret set`, never standalone.
 
-3. **Sin clave en el llavero** (o sin `secret-tool`): entrega al usuario estos comandos para que los corra en una **terminal externa** (nunca dentro del chat del agente):
+3. **If missing from the keyring** (or if `secret-tool` is not installed): give the user these commands to run in an **external terminal** (never inside the agent chat):
 
    ```bash
-   sudo apt install libsecret-tools                                      # si falta secret-tool
-   secret-tool store --label="DeepSeek CI Key" service deepseek-ci       # pega tu DEEPSEEK_API_KEY; no se muestra al escribir
+   sudo apt install libsecret-tools                                      # if secret-tool is missing
+   secret-tool store --label="DeepSeek CI Key" service deepseek-ci       # paste DEEPSEEK_API_KEY; input is hidden
    clear
    ```
 
-   Si no hay llavero gráfico disponible, el usuario corre directamente en su terminal: `gh secret set DEEPSEEK_API_KEY` dentro del repo.
+   If no graphical keyring is available, the user can run `gh secret set DEEPSEEK_API_KEY` directly in their terminal inside the repository.
 
-**Respaldo sin costo de API:** si prefieres usar GitHub Models en CI sin consumir saldo de DeepSeek, agrega `models: read` en `permissions` y en `env` define `GGA_PROVIDER: github:deepseek/DeepSeek-V3-0324` y `GH_TOKEN: ${{ github.token }}`.
+**Zero-cost fallback:** to use GitHub Models in CI without consuming DeepSeek API credits, add `models: read` under `permissions` and set `GGA_PROVIDER: github:deepseek/DeepSeek-V3-0324` and `GH_TOKEN: ${{ github.token }}` under `env`.
 
-## 10. Remoto privado y primer commit (con confirmación)
+## 10. Private remote and initial commit (with confirmation)
 
-1. Formatea el código con `uv run ruff format .` y verifica `git status --short`.
-2. Comprueba que `git status --short` **no** incluya `.env`, claves ni archivos fuera de lugar.
-3. Pregunta confirmación antes del primer commit.
-4. Haz el commit con Conventional Commits: `chore: iniciar repositorio con uv y reglas base`.
-5. Si no hay remoto configurado, pide confirmación para crearlo **privado** y hacer el push:
+1. Format the codebase with `uv run ruff format .` and inspect `git status --short`.
+2. Verify that `git status --short` does **not** include `.env`, credentials, or unexpected artifacts.
+3. Ask for confirmation before creating the initial commit.
+4. Commit using Conventional Commits: `chore: bootstrap repository with uv and baseline rules`.
+5. If no remote is configured, ask for confirmation to create a **private** repository and push:
 
    ```bash
-   gh repo create <dueño>/<slug> --private --source . --remote origin --push
+   gh repo create <owner>/<slug> --private --source . --remote origin --push
    ```
 
-   *(El dueño por defecto es el usuario activo en `gh auth status`).*
-6. Si ya existía el remoto, pregunta antes de correr `git push -u origin main`.
-7. Tras el push, configura el secreto `DEEPSEEK_API_KEY` según el paso 9.3.
+   *(Default `<owner>` is the active account in `gh auth status`).*
+6. If the remote already exists, ask before running `git push -u origin main`.
+7. After pushing, configure the `DEEPSEEK_API_KEY` secret following step 9.3.
 
-## 11. Verificación y cierre
+## 11. Verification and summary
 
-Comprueba con comandos reales, no supongas:
+Verify with real commands—do not assume:
 
-- `uv run ruff check .` y `uv run pytest` → pasan sin errores.
-- `gga config` (si `gga` está instalado) → `PROVIDER: opencode:deepseek/deepseek-chat`.
-- `cat .engram/config.json` (si `engram` está instalado) → contiene el *slug* esperado.
-- `[ -x "$(git rev-parse --git-dir)/hooks/post-merge" ]` → hook activo para importar memorias de `.engram/chunks/` automáticamente en cada `git pull`.
-- `git status --short` → limpio y sin exponer `.env`.
-- `odd/tasks/_plantilla.md` → existe.
-- Si hubo push: `gh workflow list` muestra los workflows `CI (uv + ruff + pytest)` y `Revisión GGA (DeepSeek)`, y `gh secret list` muestra `DEEPSEEK_API_KEY` (si ya se cargó).
+- `uv run ruff check .` and `uv run pytest` → pass with zero errors.
+- `gga config` (if `gga` is installed) → `PROVIDER: opencode:deepseek/deepseek-flash`.
+- `cat .engram/config.json` (if `engram` is installed) → matches the expected *slug*.
+- `[ -x "$(git rev-parse --git-dir)/hooks/post-merge" ]` → hook is executable and imports `.engram/chunks/` on every `git pull`.
+- `git status --short` → clean working tree with `.env` ignored.
+- `CONSTITUTION.md`, `AGENTS.md`, and `odd/tasks/_template.md` → exist.
+- If pushed: `gh workflow list` shows `CI (uv + ruff + pytest)` and `GGA Review (DeepSeek)`, and `gh secret list` shows `DEEPSEEK_API_KEY` (if configured).
 
-Cierra con una tabla concisa de lo creado, lo que falló y lo pendiente (herramientas faltantes o secreto de CI).
+Close with a concise table summarizing created items, any failures, and pending actions (missing tools or CI secret).

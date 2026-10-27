@@ -1,17 +1,17 @@
 ---
 name: cerrar-tarea-pr
-description: Cierra una tarea ODD en curso, verifica calidad con uv (ruff y pytest), actualiza odd/tasks/, guarda y sincroniza la memoria del equipo en Engram, hace el commit validado por GGA y abre el Pull Request en GitHub (cerrar tarea, terminar feature, subir cambios, crear PR).
+description: Closes an active ODD task, verifies code quality with uv (ruff and pytest), updates odd/tasks/, saves and syncs team memory in Engram, creates a GGA-validated commit, and opens a GitHub Pull Request (close task, finish feature, push changes, create PR, cerrar tarea).
 ---
 
 # cerrar-tarea-pr
 
-Cierra de forma limpia y reproducible una tarea desarrollada en una rama antes de compartirla con el resto del equipo: valida el código con `uv`, audita que no se suban archivos prohibidos, completa el documento en `odd/tasks/`, exporta la memoria del equipo a `.engram/chunks/` y crea el Pull Request.
+Cleanly and reproducibly closes a feature branch before sharing it with the team: validates code with `uv`, audits against forbidden files, completes the specification in `odd/tasks/`, exports team memory to `.engram/chunks/`, and opens the Pull Request.
 
-- **Con confirmación:** hacer el commit final, el `git push` y crear el Pull Request (`gh pr create`) se preguntan en un solo paso después de pasar todas las verificaciones locales.
+- **With confirmation:** creating the final commit, pushing the branch, and opening the Pull Request (`gh pr create`) are confirmed in a single step after all local checks pass.
 
-## 1. Estado de la rama y tarea activa
+## 1. Branch status and active task
 
-1. Identifica la rama actual, los archivos modificados y el documento ODD activo:
+1. Identify the current branch, modified files, and active ODD document:
 
    ```bash
    git branch --show-current
@@ -19,24 +19,24 @@ Cierra de forma limpia y reproducible una tarea desarrollada en una rama antes d
    ls -1 odd/tasks/
    ```
 
-2. **Si estás directamente en `main`:** avisa al usuario y propón crear una rama `feat/<NN>-<slug>` antes de hacer commit para que el cambio pase por Pull Request y revisión de CI.
+2. **If currently on `main`:** warn the user and propose creating a `feat/<NN>-<slug>` branch before committing so the change goes through Pull Request and CI review.
 
-## 2. Auditoría de restricciones y calidad con `uv`
+## 2. Constraint audit and quality checks with `uv`
 
-Ejecuta todas las comprobaciones en orden. **Si cualquiera falla, detente y corrige el problema antes de continuar.**
+Run all checks in order. **If any check fails, stop and fix the issue before continuing.**
 
-### 2.1. Prohibición de Notebooks, `requirements.txt`, secretos y pesos
+### 2.1. Forbidden notebooks, `requirements.txt`, secrets, and model weights
 
 ```bash
 find . -name "*.ipynb" -not -path "./.venv/*"
-[ -f requirements.txt ] && echo "ERROR: existe requirements.txt" || echo "ok: sin requirements.txt"
-git status --porcelain | grep -E '\.(env|gguf|safetensors|bin|pt|pth|onnx)$' || echo "ok: sin secretos ni pesos"
+[ -f requirements.txt ] && echo "ERROR: requirements.txt exists" || echo "ok: no requirements.txt"
+git status --porcelain | grep -E '\.(env|gguf|safetensors|bin|pt|pth|onnx)$' || echo "ok: no secrets or model weights staged"
 ```
 
-- Si aparece algún `.ipynb` o `requirements.txt`, elimínalo o conviértelo a módulo en `src/` / dependencia en `pyproject.toml`.
-- Si aparece `.env` o pesos de modelos en el estado de git, sácalos del stage y agrégalos a `.gitignore`.
+- If any `.ipynb` or `requirements.txt` file appears, remove it or migrate it to a Python module in `src/` / dependency in `pyproject.toml`.
+- If `.env` or model weight files appear in `git status`, unstage them and add their pattern to `.gitignore`.
 
-### 2.2. Formato, Linter (`ruff`) y Pruebas (`pytest`)
+### 2.2. Formatting, linter (`ruff`), and unit tests (`pytest`)
 
 ```bash
 uv run ruff format .
@@ -44,59 +44,58 @@ uv run ruff check .
 uv run pytest -v
 ```
 
-Ambos comandos (`ruff check` y `pytest`) deben terminar con código de salida `0`.
+Both `ruff check` and `pytest` must exit with code `0`.
 
-## 3. Cierre del documento en `odd/tasks/`
+## 3. Complete the document in `odd/tasks/`
 
-Revisa el archivo `odd/tasks/<NN>-<slug>.md` correspondiente a esta rama:
+Update the `odd/tasks/<NN>-<slug>.md` file for the current branch:
 
-1. Cambia el encabezado a `Estado: completado`.
-2. Verifica que todos los criterios de aceptación (`## 3`) y tareas (`## 4`) estén marcados con `- [x]`.
-3. Actualiza `## 5. Evidencia de verificación` con el resumen real de `uv run ruff check .` y `uv run pytest -v`.
-4. Si en la tarea se tomó una decisión de arquitectura o diseño relevante para todo el proyecto, agrégala en una línea con fecha en la sección `## Decisiones` de `AGENTS.md`.
+1. Set the status header to `Status: completed` (or `Estado: completado`).
+2. Confirm that all acceptance criteria (`## 3`) and implementation tasks (`## 4`) are checked (`- [x]`).
+3. Update `## 5. Verification evidence` with the actual output summary from `uv run ruff check .` and `uv run pytest -v`, and verify that every item in the **Definition of Done (DoD)** of `CONSTITUTION.md` is satisfied.
+4. If the task introduced a project-wide architectural or design decision, append a dated one-line entry under `## Architectural decisions` in `AGENTS.md`.
 
-## 4. Memoria compartida en Engram
+## 4. Shared team memory in Engram
 
-Para que el resto del equipo reciba el contexto de lo construido cuando haga `git pull`:
+So teammates receive the context of what was built when they run `git pull`:
 
-1. Guarda en Engram una memoria resumida de la tarea completada (qué módulo se creó/modificó, decisiones técnicas tomadas y cómo se usa):
-   - Si tienes la herramienta MCP `mem_save` activa, úsala; si no, ejecuta por CLI:
+1. Save a structured memory summary of the completed task in Engram (modules created/modified, technical decisions made, and usage):
+   - Use the `mem_save` MCP tool if available; otherwise run via CLI:
 
      ```bash
-     engram save "<NN> - <Título de la tarea>" "<Resumen conciso de qué se implementó, archivos clave y decisiones tomadas>" --type architecture
+     engram save "<NN> - <Task title>" "<Concise summary of implementation, key files, and design decisions>" --type architecture
      ```
 
-2. Exporta los nuevos chunks a la carpeta `.engram/` del repositorio:
+2. Export the new memory chunks into the repository's `.engram/` folder:
 
    ```bash
    engram sync
    ```
 
-3. Comprueba que `.engram/manifest.json` y `.engram/chunks/` reflejen la exportación en `git status --short`.
+3. Verify that `.engram/manifest.json` and `.engram/chunks/` appear in `git status --short`.
 
-## 5. Commit, Push y Pull Request (con confirmación)
+## 5. Commit, push, and Pull Request (with confirmation)
 
-1. Muestra al usuario:
-   - La salida de `git status --short`.
-   - El mensaje de commit propuesto en formato Conventional Commits (por ejemplo: `feat(<modulo>): implementar <resumen>`).
-   - El título y resumen del Pull Request.
-2. Pide confirmación para ejecutar el cierre.
-3. Al confirmar:
+1. Show the user:
+   - The output of `git status --short`.
+   - The proposed Conventional Commits message in English (e.g., `feat(<module>): implement <summary>`).
+   - The Pull Request title and summary.
+2. Ask for confirmation to execute the release steps.
+3. Upon confirmation:
 
    ```bash
    git add .
-   git commit -m "<tipo>(<alcance>): <descripción corta>"
+   git commit -m "<type>(<scope>): <short description>"
    ```
 
-   *(Al correr `git commit`, el hook pre-commit de **GGA** revisará el diff con DeepSeek contra `AGENTS.md`. Si GGA rechaza el commit, corrige el hallazgo reportado y vuelve a intentar).*
+   *(When `git commit` runs, the local **GGA** pre-commit hook audits the diff with DeepSeek against `AGENTS.md`. If GGA rejects the commit, fix the reported violation and retry).*
 
-4. Sube la rama y abre el Pull Request en GitHub usando el contenido del documento ODD como cuerpo:
+4. Push the branch and create the GitHub Pull Request using the ODD task document as the PR body:
 
    ```bash
-   RAMA="$(git branch --show-current)"
-   git push -u origin "$RAMA"
-   gh pr create --title "<tipo>(<alcance>): <descripción corta>" --body-file "odd/tasks/<NN>-<slug>.md"
+   BRANCH="$(git branch --show-current)"
+   git push -u origin "$BRANCH"
+   gh pr create --title "<type>(<scope>): <short description>" --body-file "odd/tasks/<NN>-<slug>.md"
    ```
 
-5. Entrega al usuario el enlace del Pull Request creado y, si desea ver el resultado de los workflows en vivo, ofrece correr `gh run watch`.
-
+5. Return the Pull Request URL to the user and offer to run `gh run watch` if they want to monitor the CI workflows live.
