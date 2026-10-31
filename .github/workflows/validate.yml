@@ -1,0 +1,13 @@
+name: validate
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-24.04  # pinned: ubuntu-latest migrates without notice
+    steps:
+      - uses: actions/checkout@v7.0.1  # exact release tag, never the major
+      - run: bash scripts/validate_skills.sh

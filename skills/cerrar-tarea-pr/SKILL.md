@@ -1,13 +1,13 @@
 ---
 name: cerrar-tarea-pr
-description: Closes an active ODD task, verifies code quality with uv (ruff and pytest), updates odd/tasks/, saves and syncs team memory in Engram, creates a GGA-validated commit, and opens a GitHub Pull Request (close task, finish feature, push changes, create PR, cerrar tarea).
+description: Closes an active ODD task, verifies code quality with uv (ruff and pytest), updates odd/tasks/, saves and syncs team memory in Engram, creates a GGA-validated commit, opens a GitHub Pull Request with a reviewer, and cleans up the branch after the merge (close task, finish feature, push changes, create PR, merge PR, cerrar tarea).
 ---
 
 # cerrar-tarea-pr
 
 Cleanly and reproducibly closes a feature branch before sharing it with the team: validates code with `uv`, audits against forbidden files, completes the specification in `odd/tasks/`, exports team memory to `.engram/chunks/`, and opens the Pull Request.
 
-- **With confirmation:** creating the final commit, pushing the branch, and opening the Pull Request (`gh pr create`) are confirmed in a single step after all local checks pass.
+- **With confirmation:** creating the final commit, pushing the branch, and opening the Pull Request (`gh pr create`) are confirmed in a single step after all local checks pass. Merging and deleting the branch (step 6) need their own confirmation.
 
 ## 1. Branch status and active task
 
@@ -19,7 +19,8 @@ Cleanly and reproducibly closes a feature branch before sharing it with the team
    ls -1 odd/tasks/
    ```
 
-2. **If currently on `main`:** warn the user and propose creating a `feat/<NN>-<slug>` branch before committing so the change goes through Pull Request and CI review.
+2. **If currently on `main`:** warn the user and propose creating a `feat/<NN>-<slug>` branch (`fix/<slug>` or `docs/<slug>` for a small change) before committing so the change goes through Pull Request and CI review.
+3. **Small change:** if the branch has no ODD task because the change was classified as small (`nueva-tarea-odd` §1.1), skip step 3: the evidence (ruff, pytest, GGA) goes to the PR body, which is the Definition of Done template plus one paragraph describing the change.
 
 ## 2. Constraint audit and quality checks with `uv`
 
@@ -48,12 +49,14 @@ Both `ruff check` and `pytest` must exit with code `0`.
 
 ## 3. Complete the document in `odd/tasks/`
 
+If the branch has no ODD task because the change was classified as small, skip step 3: the evidence (ruff, pytest, GGA) goes to the PR body, which is the Definition of Done template plus one paragraph describing the change (see 5.4).
+
 Update the `odd/tasks/<NN>-<slug>.md` file for the current branch:
 
 1. Set the status header to `Status: completed` (or `Estado: completado`).
 2. Confirm that all acceptance criteria (`## 3`) and implementation tasks (`## 4`) are checked (`- [x]`).
 3. Update `## 5. Verification evidence` with the actual output summary from `uv run ruff check .` and `uv run pytest -v`, and verify that every item in the **Definition of Done (DoD)** of `CONSTITUTION.md` is satisfied.
-4. If the task introduced a project-wide architectural or design decision, append a dated one-line entry under `## Architectural decisions` in `AGENTS.md`.
+4. If the task introduced a project-wide architectural or design decision, append a dated one-line entry under `## Architectural decisions` in `AGENTS.md` **only for rules and choices with their rationale; run figures (counts, sizes, durations) go to `CHANGELOG.md`**.
 
 ## 4. Shared team memory in Engram
 
@@ -76,26 +79,87 @@ So teammates receive the context of what was built when they run `git pull`:
 
 ## 5. Commit, push, and Pull Request (with confirmation)
 
-1. Show the user:
-   - The output of `git status --short`.
-   - The proposed Conventional Commits message in English (e.g., `feat(<module>): implement <summary>`).
-   - The Pull Request title and summary.
-2. Ask for confirmation to execute the release steps.
-3. Upon confirmation:
+### 5.0. Run GGA before the commit
 
-   ```bash
-   git add .
-   git commit -m "<type>(<scope>): <short description>"
-   ```
+`gga run` reviews the staged files only, so stage the changes first:
 
-   *(When `git commit` runs, the local **GGA** pre-commit hook audits the diff with DeepSeek against `AGENTS.md`. If GGA rejects the commit, fix the reported violation and retry).*
+```bash
+git add -A
+gga run
+```
 
-4. Push the branch and create the GitHub Pull Request using the ODD task document as the PR body:
+Fix every violation it reports, stage the fixes with `git add -A` and run it again until it prints `STATUS: PASSED`. Two cases are different:
 
-   ```bash
-   BRANCH="$(git branch --show-current)"
-   git push -u origin "$BRANCH"
-   gh pr create --title "<type>(<scope>): <short description>" --body-file "odd/tasks/<NN>-<slug>.md"
-   ```
+- `STATUS: FAILED`: fix the violation. Never disable the hook and never use `git commit --no-verify` to skip a rejection.
+- Ambiguous result (strict mode cannot find the `STATUS:` line because the model narrates before answering): set `STRICT_MODE="false"` in `.gga` only for this local review, read the whole review, apply its findings, restore `STRICT_MODE="true"` before committing and record the review in the ODD task evidence. `--no-verify` is allowed only with the team's explicit authorization, after that full review, and the task document must say so.
 
-5. Return the Pull Request URL to the user and offer to run `gh run watch` if they want to monitor the CI workflows live.
+### 5.1. Show the release plan
+
+Show the user:
+
+- The output of `git status --short`.
+- The proposed Conventional Commits message in English (e.g., `feat(<module>): implement <summary>`).
+- The Pull Request title and summary.
+- The reviewer: ask who reviews and take their GitHub login. If there is no reviewer, warn that the Pull Request will not meet "review required" in graded or evaluated flows.
+
+### 5.2. Confirm
+
+Ask for confirmation to execute the release steps.
+
+### 5.3. Stage and commit
+
+Upon confirmation, stage everything and review what will be committed:
+
+```bash
+git add -A
+git status --short      # review: nothing unexpected (no .env, no data blobs)
+```
+
+If anything unexpected appears, unstage it with `git restore --staged <path>` and fix `.gitignore` before committing:
+
+```bash
+git commit -m "<type>(<scope>): <short description>"
+```
+
+*(When `git commit` runs, the local **GGA** pre-commit hook audits the diff with DeepSeek against `AGENTS.md`; files that already passed in 5.0 come from GGA's cache. If GGA rejects the commit, fix the reported violation and retry).*
+
+### 5.4. Push and open the Pull Request
+
+Push the branch and create the GitHub Pull Request with the reviewer from 5.1. The body is the ODD task followed by the Definition of Done checklist of `.github/PULL_REQUEST_TEMPLATE.md`:
+
+```bash
+BRANCH="$(git branch --show-current)"
+BODY_FILE="$(mktemp)"
+cat "odd/tasks/<NN>-<slug>.md" .github/PULL_REQUEST_TEMPLATE.md > "$BODY_FILE"
+git push -u origin "$BRANCH"
+gh pr create --title "<type>(<scope>): <short description>" --body-file "$BODY_FILE" --reviewer "<login>"
+```
+
+If the repository has no `.github/PULL_REQUEST_TEMPLATE.md` (it was bootstrapped before `iniciar-repo-ia` created one), the body is the ODD task alone.
+
+For a small change there is no task: the body is one paragraph with what changed, why, and the ruff, pytest and GGA results, followed by the template, whose ODD task item stays unchecked as not applicable:
+
+```bash
+printf '%s\n\n' "<one paragraph: what changed, why, and the ruff, pytest and GGA results>" > "$BODY_FILE"
+cat .github/PULL_REQUEST_TEMPLATE.md >> "$BODY_FILE"
+```
+
+### 5.5. Report
+
+Return the Pull Request URL to the user and offer to run `gh run watch` if they want to monitor the CI workflows live.
+
+## 6. After merge (with confirmation)
+
+The author merges once the reviewer approves and CI is green. Ask for confirmation, then:
+
+```bash
+gh pr merge "<n>" --squash --delete-branch      # or --merge, per repo convention
+git switch main && git pull --ff-only && git fetch --prune
+git branch -d "feat/<NN>-<slug>"
+```
+
+`--delete-branch` removes the remote branch and, when it can, the local one; the last line cleans up the local branch otherwise. After a squash merge Git does not see the branch as merged, so `git branch -d` refuses: use `git branch -D` only after `gh pr view "<n>" --json state` reports `MERGED`.
+
+## Example
+
+See `examples/close-task-09.md` for a complete walkthrough.

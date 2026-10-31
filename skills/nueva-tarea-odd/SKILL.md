@@ -1,13 +1,13 @@
 ---
 name: nueva-tarea-odd
-description: Starts, specifies, and implements a new Python/AI requirement or experiment following ODD in odd/tasks/ with uv in OpenCode and DeepSeek (new task, specify feature, implement ODD task, nueva tarea). Syncs main and Engram, creates the feat/<NN>-<slug> branch, drafts odd/tasks/<NN>-<slug>.md, requests approval before coding, and implements task by task with ruff and pytest.
+description: Starts, specifies, and implements a new Python/AI requirement or experiment following ODD in odd/tasks/ with uv in OpenCode and DeepSeek (new task, specify feature, implement ODD task, nueva tarea). Classifies the change as small or substantial first; for a substantial one, syncs main and Engram, creates the feat/<NN>-<slug> branch, drafts odd/tasks/<NN>-<slug>.md, requests approval before coding, and implements task by task with ruff and pytest.
 ---
 
 # nueva-tarea-odd
 
 Guides the full lifecycle of a requirement under **ODD (Organic-Driven Development)** in Python and Artificial Intelligence projects using **`uv`**, **Engram**, and **GGA**: first specify and validate the design in `odd/tasks/`, then implement incrementally in `src/` and `tests/`.
 
-- **Golden rule:** never write or modify code in `src/` or `tests/` before `odd/tasks/<NN>-<slug>.md` is created and approved by the user.
+- **Golden rule:** for a substantial change (see 1.1), never write or modify code in `src/` or `tests/` before `odd/tasks/<NN>-<slug>.md` is created and approved by the user.
 - **Environment constraints:** never create `.ipynb` files, never use `pip install`, always include explicit type hints, and write all code identifiers, docstrings, comments, and tests in **English**.
 
 ## 1. Initial context and synchronization
@@ -27,6 +27,14 @@ Guides the full lifecycle of a requirement under **ODD (Organic-Driven Developme
    ```
 
 4. Query Engram for prior project decisions (`engram context` or the Engram MCP tool if active) and read `CONSTITUTION.md` and `AGENTS.md` to identify the package path `src/<package>/`, architectural boundaries, and active project rules.
+
+### 1.1. Classify the change before specifying
+
+A change is **small** when a teammate could resume it with the request and `git diff` alone: a typo, one function, a documentation paragraph, a configuration value. Counting files, lines or tests does not decide. Everything else is **substantial**.
+
+- Small: no `odd/tasks/` file. Branch `fix/<slug>` or `docs/<slug>`, one Conventional Commit, and `cerrar-tarea-pr` with a one-paragraph PR body. Documentation-only changes are small unless they amend `CONSTITUTION.md`.
+- Substantial: steps 2 to 5 of this skill.
+- Promotion: if a small change reveals a design decision or needs a second iteration, stop and create the task before continuing.
 
 ## 2. Task numbering and branch creation
 
@@ -81,7 +89,15 @@ Branch: `feat/<NN>-<slug>`
 
 ## 5. Verification evidence
 Pending implementation.
+
+## 6. Log
+
+- L1 (request): <the user's request, verbatim>
+- A1 (assumption): <what the request did not define and did not deserve a question>
+- <date>: <correction, decision or evidence added while implementing>
 ```
+
+`L1` is always the user's own words, never a paraphrase. Every assumption gets an `A<n>` line and is mentioned when the task closes. Later corrections are appended, never rewritten over.
 
 ## 4. Mandatory approval gate
 
@@ -99,12 +115,15 @@ Once the user approves:
    ```
 
 3. Execute the tasks sequentially (`T1` → `T2` → `T3` → `T4`):
+   - Before writing Python, read `references/pep8-checklist.md` of this skill.
    - Follow pragmatic software engineering practices:
      - **English-only code:** all module names, classes, functions, variables, type annotations, docstrings, and test names must be in English.
      - **SRP:** short functions with a single responsibility and a single level of abstraction.
      - **KISS / YAGNI:** modular, direct code without unnecessary layers or interfaces.
      - **Parameter injection:** accept external clients or settings as arguments so `pytest` tests use mocks/stubs without live API calls or heavy model downloads.
      - **Zero magic values:** keep model names, hyperparameters, and file paths in constants or centralized configuration.
+   - Bug fixes (`fix` type): write first the automated test that reproduces the bug and fails; the fix turns it green. Never fix a bug without its test.
+   - Markdown with Python blocks: `ruff format --check .` also formats the Python code blocks of `.md` files that parse as valid Python, so a plan or task with code can fail CI. After editing one, run `uv run ruff format <file.md>`. Blocks that do not parse are ignored silently.
    - Mark each completed task as `- [x]` in `odd/tasks/<NN>-<slug>.md`.
 4. Run verification in `T4`:
 
@@ -115,3 +134,7 @@ Once the user approves:
    ```
 
 5. Once all checks pass, update `## 5. Verification evidence` in `odd/tasks/<NN>-<slug>.md` with the actual `ruff` and `pytest` output, mark satisfied acceptance criteria (`[x]`), and let the user know they can inspect the changes or run `cerrar-tarea-pr` to sync Engram and open the Pull Request.
+
+## Example
+
+See `examples/windows-makefile-task.md` for a complete walkthrough.

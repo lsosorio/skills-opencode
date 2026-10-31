@@ -1,6 +1,6 @@
 ---
 name: iniciar-repo-ia
-description: Bootstraps a Python and Artificial Intelligence repository or workspace with uv for OpenCode and DeepSeek (init repo, start AI project, new uv workspace, iniciar repo). Configures git, private GitHub remote, packaged uv project (no pip, no Jupyter Notebooks), ruff, pytest, CONSTITUTION.md, AGENTS.md with software engineering rules, shared Engram memory, odd/tasks, GGA with DeepSeek, and GitHub Actions CI.
+description: Bootstraps a Python and Artificial Intelligence repository or workspace with uv for OpenCode and DeepSeek (init repo, start AI project, new uv workspace, iniciar repo). Configures git, a public or private GitHub remote, an MIT license, packaged uv project (no pip, no Jupyter Notebooks), ruff, pytest, CONSTITUTION.md, AGENTS.md with software engineering rules, a README template, shared Engram memory, odd/tasks, GGA with DeepSeek, and GitHub Actions CI.
 ---
 
 # iniciar-repo-ia
@@ -26,7 +26,8 @@ Extract whatever is already provided in the user's request and ask for the missi
   - *Standalone repo* (default).
   - *Repo inside a workspace:* the parent directory groups multiple repos for a single product. Runs inside the repo; if the root does not yet have `AGENTS.md` or `.engram/`, this skill creates them (steps 4 and 5).
   - *Workspace with existing repos:* runs at the workspace root.
-- **Remote:** does it already exist? If not, offer to create it as **private** (`--private`) in step 10.
+- **Remote:** does it already exist? If not, offer to create it in step 10 with the visibility below.
+- **Visibility:** `public` or `private`. Academic deliverables that will be graded usually need a public repository and an MIT license.
 
 If the current directory name contains spaces, warn the user: spaces in paths require quoting across all scripts. Propose renaming the directory to the *slug* before continuing.
 
@@ -43,7 +44,7 @@ ls -la
 - **Without `git` or `uv`, stop before touching files** and provide the installation commands below.
 - **Without `gh` or an active `gh` session, and with a remote requested, stop before creating files** and provide the setup commands below. Finding out at the end leaves the push and CI secret incomplete. If no remote was requested, continue and log it as pending.
 - Any other missing tool is reported at the end and does not block the remaining steps.
-- Existing files (`CONSTITUTION.md`, `AGENTS.md`, `pyproject.toml`, `.gga`, `.engram/`, `.gitignore`, `.dockerignore`, `.github/workflows/`): never overwrite without asking.
+- Existing files (`CONSTITUTION.md`, `AGENTS.md`, `README.md`, `LICENSE`, `pyproject.toml`, `.gga`, `.engram/`, `.gitignore`, `.dockerignore`, `.github/workflows/`): never overwrite without asking.
 - **Workspace:** repos are directories containing `pyproject.toml` or `.git`, not necessarily top-level folders. Locate them with:
 
   ```bash
@@ -82,6 +83,20 @@ gh auth setup-git
 gh auth status
 ```
 
+### Windows
+
+Run every command of this skill from the Git for Windows bash (`C:\Program Files\Git\bin\bash.exe`), never from PowerShell and never from the WSL `bash.exe` in `C:\Windows\System32`, which mistranslates repository paths. Install the tools from PowerShell first:
+
+```powershell
+winget install --id Git.Git -e
+winget install --id GitHub.cli -e
+irm https://astral.sh/uv/install.ps1 | iex
+```
+
+Then open Git Bash in the project folder and continue; `gh auth login` is the same command.
+
+Engram installs on Windows with `go install` (see its README) and registers itself in OpenCode with `engram setup opencode`; GGA installs with its Git Bash installer. If `gga install` or `gga run` fail from PowerShell with a repository error, the `gga.bat` wrapper of GGA 2.10.1 sets a variable named `GIT_DIR`, which Git reads as the repository path: rename it to `GIT_CMD_DIR` inside the wrapper.
+
 ## 3. Git and Python environment with `uv`
 
 ### 3.1. Initialize Git
@@ -112,11 +127,16 @@ Append `ruff` and `pytest` settings to `pyproject.toml` if not already present:
 
 ```toml
 [tool.ruff]
+# PEP 8 recommends 79 characters; the team agreed on 100.
 line-length = 100
 target-version = "py312"
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "B", "UP", "N", "SIM"]
+select = ["E", "W", "F", "I", "B", "UP", "N", "SIM", "D", "ANN"]
+ignore = ["D1"]  # docstrings are not mandatory; when present they follow PEP 257
+
+[tool.ruff.lint.pydocstyle]
+convention = "pep257"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -191,13 +211,99 @@ HF_TOKEN=
 EOF
 ```
 
+Create `.gitattributes` so Git for Windows with `core.autocrlf=true` never checks out `scripts/setup.sh` or the hooks with CRLF, which breaks the `#!/usr/bin/env bash` line:
+
+```bash
+[ -f .gitattributes ] || printf '* text=auto\n*.sh text eol=lf\n' > .gitattributes
+```
+
 To exclude paths locally in this clone only without modifying the tracked `.gitignore`:
 
 ```bash
 exclude_local() { f="$(git rev-parse --git-dir)/info/exclude"; grep -qxF "$1" "$f" 2>/dev/null || echo "$1" >> "$f"; }
 ```
 
-## 4. CONSTITUTION.md and AGENTS.md
+### 3.4. LICENSE
+
+```bash
+YEAR=$(date +%Y); HOLDER="$(git config user.name)"
+[ -f LICENSE ] || gh api licenses/mit --jq .body | sed "s/\[year\]/$YEAR/; s/\[fullname\]/$HOLDER/" > LICENSE
+grep -q '^license = ' pyproject.toml || sed -i '/^readme = /a license = "MIT"\nlicense-files = ["LICENSE"]' pyproject.toml
+uv sync --locked 2>/dev/null || uv lock
+```
+
+Ask before choosing a license other than MIT; never put data-rights clarifications inside LICENSE, put them in the README.
+
+### 3.5. `CHANGELOG.md`
+
+Run figures (counts, sizes, durations, run ids) go here, never to `AGENTS.md`, which keeps only rules and their rationale:
+
+```bash
+[ -f CHANGELOG.md ] || printf '# Changelog\n\nRun figures and notable changes, newest first. Rules and decisions live in `AGENTS.md`.\n\n## Unreleased\n\n- Project bootstrapped with `iniciar-repo-ia`.\n' > CHANGELOG.md
+```
+
+### 3.6. `Makefile`
+
+Team shortcuts. On Windows GNU make is native and cannot resolve `/usr/bin/env`, so `SHELL` points to the Git for Windows bash. Recipes start with a tab, never spaces. Write the file only if it does not exist:
+
+```makefile
+ifeq ($(OS),Windows_NT)
+GIT_BASH ?= $(firstword $(wildcard C:/Progra~1/Git/bin/bash.exe) $(wildcard C:/Progra~2/Git/bin/bash.exe) $(wildcard $(LOCALAPPDATA)/Programs/Git/bin/bash.exe))
+ifeq ($(GIT_BASH),)
+$(error Git Bash not found. Install Git for Windows or pass GIT_BASH=<path to bash.exe>)
+endif
+SHELL := $(GIT_BASH)
+else
+SHELL := /usr/bin/env bash
+endif
+.SHELLFLAGS := -eu -o pipefail -c
+.DEFAULT_GOAL := help
+UV ?= uv
+
+.PHONY: help setup lint format format-check test check
+
+help: ## Show this help
+	@grep -E '^[a-zA-Z_-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  %-14s %s\n", $$1, $$2}'
+
+setup: ## Sync the environment, import Engram and install the hooks
+	./scripts/setup.sh
+
+lint: ## Run ruff check
+	$(UV) run ruff check .
+
+format: ## Format with ruff
+	$(UV) run ruff format .
+
+format-check: ## Verify formatting
+	$(UV) run ruff format --check .
+
+test: ## Run pytest
+	$(UV) run pytest
+
+check: format-check lint test ## Everything CI runs
+```
+
+### 3.7. Pull request template
+
+GitHub fills the PR body with this file when the PR is opened from the web. `cerrar-tarea-pr` builds the body as the ODD task followed by this checklist:
+
+```bash
+mkdir -p .github
+[ -f .github/PULL_REQUEST_TEMPLATE.md ] || cat << 'EOF' > .github/PULL_REQUEST_TEMPLATE.md
+## Definition of Done
+
+- [ ] Complies with `CONSTITUTION.md` and `AGENTS.md`
+- [ ] ODD task in `completed` with real evidence
+- [ ] `uv run ruff format --check .` and `uv run ruff check .` pass
+- [ ] `uv run pytest` passes without network
+- [ ] No notebooks, secrets, `requirements.txt` or model weights
+- [ ] Documentation updated (`README.md`, `AGENTS.md` decisions, `CHANGELOG.md` figures)
+- [ ] `.engram/` exported in the commit
+- [ ] CI and GGA green; reviewer assigned
+EOF
+```
+
+## 4. CONSTITUTION.md, AGENTS.md, and README.md
 
 Separating the architectural contract (`CONSTITUTION.md`) from the diff-level review rules (`AGENTS.md`) keeps `AGENTS.md` fast and under GGA's 200-line limit while giving OpenCode a clear, immutable set of engineering standards and a Definition of Done (DoD).
 
@@ -294,14 +400,16 @@ Stack: Python (>=3.12) managed exclusively with `uv`.
 - `odd/tasks/`: task and feature specifications (based on `odd/tasks/_template.md`).
 - `.engram/`: shared project memory (`config.json`, `manifest.json`, and `chunks/`).
 - `scripts/setup.sh`: team onboarding script to configure the local environment and git hooks after cloning.
+- `Makefile`: team shortcuts; `make check` runs what CI runs.
+- `CHANGELOG.md`: run figures (counts, sizes, durations) and notable changes, newest first.
 
 ## Team workflow and ODD
 - **First-time clone onboarding:** run `./scripts/setup.sh` (syncs `uv`, imports Engram memory, and installs local `gga` and `post-merge` hooks).
-- **Specify before coding (ODD):** use the `nueva-tarea-odd` skill (or create `odd/tasks/<NN>-<slug>.md` from `odd/tasks/_template.md`) and get user approval before writing code in `src/`.
+- **Specify before coding (ODD):** for a substantial change, use the `nueva-tarea-odd` skill (or create `odd/tasks/<NN>-<slug>.md` from `odd/tasks/_template.md`) and get user approval before writing code in `src/`. A small change (a typo, one function, a documentation paragraph) needs no task: a `fix/` or `docs/` branch and one commit, as `nueva-tarea-odd` §1.1 explains.
 - **Closing a task:** use the `cerrar-tarea-pr` skill (or run `uv run ruff check .`, `uv run pytest`, record verification evidence in `odd/tasks/`, and run `engram sync && git add .engram/` before committing).
 
 ## Architectural decisions
-Record every significant design decision here with its date and rationale.
+Record every significant design decision here with its date and rationale. Run figures go to `CHANGELOG.md`, never here.
 
 ## Code review rules (GGA)
 
@@ -320,7 +428,9 @@ REJECT if:
 REQUIRE:
 - Explicit type hints on all function and method signatures
 - English naming for all source code identifiers, comments, docstrings, and tests
+- English identifiers, docstrings, comments and test names in every new or modified function; legacy exceptions must be listed under `## Architectural decisions`
 - Environment variables and secrets loaded through centralized configuration, never scattered across logic
+- PEP 8 enforced by `ruff` (`E`, `W`, `N`, `D`, `I`, `ANN`); the reviewer checks the rest with the PEP 8 checklist of the `revisar-pr` skill
 
 PREFER:
 - Single Responsibility Principle (SRP): each module and function does one thing well; short functions at a single level of abstraction
@@ -330,6 +440,86 @@ PREFER:
 ```
 
 In a **workspace**: create an `AGENTS.md` at the root containing only shared context and a table of repos with their `Status` (without the GGA block), plus a full `AGENTS.md` inside each repo using the template above.
+
+### 4.3. `README.md` (project front page)
+
+`uv init` leaves an empty `README.md`; write this template into it. If `README.md` already has content, show it and ask whether to add the missing sections.
+
+````markdown
+# <Project Name>
+
+[![CI](https://github.com/<owner>/<slug>/actions/workflows/ci.yml/badge.svg)](https://github.com/<owner>/<slug>/actions/workflows/ci.yml)
+[![Python 3.12](https://img.shields.io/badge/python-3.12-blue)](https://www.python.org/)
+[![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
+<description from step 1>
+
+## Problem and solution
+
+<The problem, who has it, and how this project solves it, in three to five lines.>
+
+## Architecture
+
+```mermaid
+flowchart LR
+    input[Input data] --> core[src/<package>] --> output[Results]
+```
+
+<One line per component: what it reads, what it writes, and why it is separate.>
+
+## Install
+
+Requires Python 3.12 and [`uv`](https://docs.astral.sh/uv/).
+
+```bash
+git clone https://github.com/<owner>/<slug>.git
+cd <slug>
+uv sync
+```
+
+Teammates run `./scripts/setup.sh` once after cloning: it syncs `uv`, imports the Engram memory and installs the git hooks. On Windows, run it from PowerShell through the Git for Windows bash:
+
+```powershell
+& "C:\Program Files\Git\bin\bash.exe" scripts/setup.sh
+```
+
+## Usage
+
+```bash
+uv run <slug>
+```
+
+<The main commands, each with a real example of input and output.>
+
+## Structure
+
+```text
+src/<package>/   source code
+tests/           pytest tests, no network
+data/            raw/ and processed/ data, not versioned
+odd/tasks/       one specification per task
+```
+
+## Screenshots
+
+<Images of the main result stored in docs/img/; delete this section if the project has no visual output.>
+
+## Contributing
+
+Specify each change under ODD with the `nueva-tarea-odd` skill, keep `uv run ruff check .`, `uv run ruff format --check .` and `uv run pytest` green, and close it with `cerrar-tarea-pr`, which opens the pull request with a reviewer. The rules are in `CONSTITUTION.md` and `AGENTS.md`.
+
+## License
+
+Code under the [MIT License](LICENSE). <Rights of the third-party data the project captures or uses, and whether it is redistributed.>
+
+## Credits
+
+<Authors, course or organization, and each data source with its owner.>
+````
+
+Fill every placeholder with what step 1 provides; a section with nothing to say yet keeps one `TODO:` line instead of invented content. If step 3.4 used another license, change the badge and the License section to match.
 
 ## 5. Engram (Shared project memory)
 
@@ -358,6 +548,12 @@ engram init <slug>
   EOF
   chmod +x scripts/setup.sh
   ./scripts/setup.sh
+  ```
+
+  On Windows, teammates run the onboarding from PowerShell through the Git for Windows bash; the `post-merge` and `gga` hooks are bash scripts and Git for Windows runs them with its own `sh`:
+
+  ```powershell
+  & "C:\Program Files\Git\bin\bash.exe" scripts/setup.sh
   ```
 
 - **Workspace:** run `engram init <slug>` at the root **and** in each repo using the **same** slug. Ask which repo syncs `.engram/chunks/`. In all other repos, add `.engram/chunks/` and `.engram/manifest.json` to `.gitignore` to avoid desynchronized exports.
@@ -398,6 +594,12 @@ Branch: `feat/<NN>-<slug>`
 ## 5. Verification evidence
 - `uv run ruff check .` -> <result>
 - `uv run pytest` -> <result>
+
+## 6. Log
+
+- L1 (request): <the user's request, verbatim>
+- A1 (assumption): <what the request did not define and did not deserve a question>
+- <date>: <correction, decision or evidence added while implementing>
 EOF
 ```
 
@@ -409,11 +611,14 @@ Write `.gga` directly (do not run `gga init`):
 
 ```ini
 PROVIDER="opencode:deepseek/deepseek-flash"
+FILE_PATTERNS="*.py,*.go,*.ts,*.tsx,*.js,*.jsx,Makefile,*.md,*.toml,*.yml,*.yaml,*.sh,Dockerfile,.env.example"
 RULES_FILE="AGENTS.md"
 STRICT_MODE="true"
 PR_BASE_BRANCH="main"
 EXCLUDE_PATTERNS="uv.lock,*.lock,.engram/*,*.jsonl.gz,*.jsonl,*.min.js,*.min.css,*.map,*.svg,*.png,*.jpg,*.jpeg,*.gif,*.ico,*.pdf,*.woff,*.woff2"
 ```
+
+`FILE_PATTERNS` decides what GGA reviews. Without it, GGA 2.10.1 reviews every staged file that `EXCLUDE_PATTERNS` does not drop and pastes binaries into the prompt as well, while `gga init` writes `*.ts,*.tsx,*.js,*.jsx` and a teammate's global `~/.config/gga/config` can narrow the list on one machine; the project value overrides both. This list covers code, the Makefile, Markdown (plans, ODD tasks, README) and the configuration files where `REJECT` rules apply (`pyproject.toml`, workflows, scripts, `Dockerfile`, `.env.example`). Add a pattern when the project adds another text format.
 
 Then install the pre-commit hook and verify configuration (if `gga` is installed):
 
@@ -456,16 +661,20 @@ data/processed
 Resolve current versions when creating the workflow files (do not leave floating tags):
 
 ```bash
-OC_VER=$(npm view opencode-ai version 2>/dev/null || echo "latest")
+OC_VER=$(npm view opencode-ai version 2>/dev/null || echo "1.19.4")
 GGA_TAG=$(git ls-remote --tags --refs --sort=-v:refname https://github.com/Gentleman-Programming/gentleman-guardian-angel.git 2>/dev/null | head -1 | sed 's#.*/##')
-CHECKOUT=$(gh api repos/actions/checkout/releases/latest --jq .tag_name 2>/dev/null | cut -d. -f1)
-SETUP_UV=$(gh api repos/astral-sh/setup-uv/releases/latest --jq .tag_name 2>/dev/null | cut -d. -f1)
-echo "opencode=$OC_VER gga=${GGA_TAG:-main} checkout=${CHECKOUT:-v4} setup-uv=${SETUP_UV:-v5}"
+CHECKOUT=$(gh api repos/actions/checkout/releases/latest --jq .tag_name 2>/dev/null)
+SETUP_UV=$(gh api repos/astral-sh/setup-uv/releases/latest --jq .tag_name 2>/dev/null)
+echo "opencode=$OC_VER gga=${GGA_TAG:-v2.10.1} checkout=${CHECKOUT:-v7.0.1} setup-uv=${SETUP_UV:-v10.3.2}"
 ```
+
+Always use the full tag (`v10.3.2`), never the major (`v10`): `astral-sh/setup-uv` stopped publishing moving major tags after `v7`, so `@v10` does not exist and the workflow fails on the first push.
+
+`OC_VER` must be a version that npm publishes for `opencode-ai`, the package CI installs. The OpenCode you run locally may come from another installer with a different version (2.x locally while npm was on 1.19 in October 2026), so never copy `opencode --version` into the workflow.
 
 ### 9.1. Code quality and tests with `uv` (`.github/workflows/ci.yml`)
 
-Replace `<CHECKOUT>` (e.g., `v4`) and `<SETUP_UV>` (e.g., `v5`):
+Replace `<CHECKOUT>` (e.g., `v7.0.1`) and `<SETUP_UV>` (e.g., `v10.3.2`) with the exact tags resolved above:
 
 ```yaml
 name: CI (uv + ruff + pytest)
@@ -484,7 +693,7 @@ concurrency:
 
 jobs:
   verify:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04  # pinned: ubuntu-latest migrates without notice
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@<CHECKOUT>
@@ -533,7 +742,7 @@ concurrency:
 jobs:
   review:
     if: github.event.pull_request.draft == false
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04  # pinned: ubuntu-latest migrates without notice
     timeout-minutes: 15
     continue-on-error: true
     env:
@@ -583,19 +792,31 @@ Set the `DEEPSEEK_API_KEY` repository secret **after pushing** (`gh secret set` 
 
 **Zero-cost fallback:** to use GitHub Models in CI without consuming DeepSeek API credits, add `models: read` under `permissions` and set `GGA_PROVIDER: github:deepseek/DeepSeek-V3-0324` and `GH_TOKEN: ${{ github.token }}` under `env`.
 
-## 10. Private remote and initial commit (with confirmation)
+## 10. Remote and initial commit (with confirmation)
 
 1. Format the codebase with `uv run ruff format .` and inspect `git status --short`.
 2. Verify that `git status --short` does **not** include `.env`, credentials, or unexpected artifacts.
 3. Ask for confirmation before creating the initial commit.
 4. Commit using Conventional Commits: `chore: bootstrap repository with uv and baseline rules`.
-5. If no remote is configured, ask for confirmation to create a **private** repository and push:
+5. If no remote is configured, ask for confirmation to create the repository with the visibility chosen in step 1 and push:
 
    ```bash
-   gh repo create <owner>/<slug> --private --source . --remote origin --push
+   gh repo create <owner>/<slug> --<visibility> --source . --remote origin --push
    ```
 
-   *(Default `<owner>` is the active account in `gh auth status`).*
+   *(Default `<owner>` is the active account in `gh auth status`; `<visibility>` is `public` or `private`).*
+
+   For a **public** repository, audit what the push will publish before running it, because the whole history becomes visible:
+
+   ```bash
+   git ls-files | grep -E '(^|/)\.env$|\.(pem|key|p12)$' || echo "ok: no .env or keys tracked"
+   git ls-files | grep -E '\.(ipynb|bin|pt|pth|safetensors|gguf|onnx)$' || echo "ok: no notebooks or weights tracked"
+   git log -p --all | grep -nE 'DEEPSEEK_API_KEY=[^ ]|HF_TOKEN=[^ ]|sk-[A-Za-z0-9]{20,}|ghp_[A-Za-z0-9]{20,}' || echo "ok: no secrets in history"
+   ```
+
+   Any hit stops the push until the user decides: rotate the key first, and rewrite history only with explicit confirmation. To make public a repository that started private, use the `publicar-repo` skill, which also protects `main` and adds the reviewers.
+
+   If the push fails with `refusing to allow an OAuth App to create or update workflow ... without workflow scope`, the repository already exists on GitHub and is empty: the `gh` token lacks the `workflow` scope that an HTTPS push of `.github/workflows/` needs. Ask the user to run `gh auth refresh -h github.com -s workflow` (interactive), then run `git push -u origin main`. Never remove the workflow to get the push through.
 6. If the remote already exists, ask before running `git push -u origin main`.
 7. After pushing, configure the `DEEPSEEK_API_KEY` secret following step 9.3.
 
@@ -608,7 +829,11 @@ Verify with real commands—do not assume:
 - `cat .engram/config.json` (if `engram` is installed) → matches the expected *slug*.
 - `[ -x "$(git rev-parse --git-dir)/hooks/post-merge" ]` → hook is executable and imports `.engram/chunks/` on every `git pull`.
 - `git status --short` → clean working tree with `.env` ignored.
-- `CONSTITUTION.md`, `AGENTS.md`, and `odd/tasks/_template.md` → exist.
-- If pushed: `gh workflow list` shows `CI (uv + ruff + pytest)` and `GGA Review (DeepSeek)`, and `gh secret list` shows `DEEPSEEK_API_KEY` (if configured).
+- `CONSTITUTION.md`, `AGENTS.md`, `README.md`, `LICENSE`, and `odd/tasks/_template.md` → exist; `grep '^license = ' pyproject.toml` → the chosen license.
+- If pushed: `gh workflow list` shows `CI (uv + ruff + pytest)` and `GGA Review (DeepSeek)`, `gh secret list` shows `DEEPSEEK_API_KEY` (if configured), and `gh repo view <owner>/<slug> --json visibility,licenseInfo` shows the visibility chosen in step 1 and the license.
 
 Close with a concise table summarizing created items, any failures, and pending actions (missing tools or CI secret).
+
+## Example
+
+See `examples/bootstrap-corpus-acme.md` for a complete walkthrough.
