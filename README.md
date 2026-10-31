@@ -92,6 +92,24 @@ done
 
 Restart `opencode` after adding or changing a command.
 
+## Claude Code
+
+Claude Code reads skills from `~/.claude/skills/<name>/SKILL.md`, the same format, so one clone serves both tools and the two copies never diverge. From the root of the clone:
+
+```bash
+mkdir -p ~/.claude/skills
+for skill in skills/*/; do
+  name=$(basename "$skill")
+  ln -sfn "$PWD/skills/$name" ~/.claude/skills/"$name"
+done
+ls -l ~/.claude/skills/
+```
+
+On Windows, copy the folders instead (`cp -r skills/* ~/.claude/skills/`) and repeat the copy after every `git pull`, as in the OpenCode instructions.
+
+- The global instructions in `AGENTS.md` are installed for OpenCode (`~/.config/opencode/AGENTS.md`). Claude Code does not read that file; its global instructions live in `~/.claude/CLAUDE.md`.
+- The `iniciar-repo` skill of the `lmbros` Claude Code plugin overlaps with `iniciar-repo-ia`. Keep only one of them so they do not diverge; linking these skills does not remove or change the plugin.
+
 ## Usage workflow in OpenCode
 
 After installing, restart `opencode` and invoke the desired skill in chat:
