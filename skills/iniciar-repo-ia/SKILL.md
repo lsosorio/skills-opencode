@@ -456,16 +456,20 @@ data/processed
 Resolve current versions when creating the workflow files (do not leave floating tags):
 
 ```bash
-OC_VER=$(npm view opencode-ai version 2>/dev/null || echo "latest")
+OC_VER=$(npm view opencode-ai version 2>/dev/null || echo "1.19.4")
 GGA_TAG=$(git ls-remote --tags --refs --sort=-v:refname https://github.com/Gentleman-Programming/gentleman-guardian-angel.git 2>/dev/null | head -1 | sed 's#.*/##')
-CHECKOUT=$(gh api repos/actions/checkout/releases/latest --jq .tag_name 2>/dev/null | cut -d. -f1)
-SETUP_UV=$(gh api repos/astral-sh/setup-uv/releases/latest --jq .tag_name 2>/dev/null | cut -d. -f1)
-echo "opencode=$OC_VER gga=${GGA_TAG:-main} checkout=${CHECKOUT:-v4} setup-uv=${SETUP_UV:-v5}"
+CHECKOUT=$(gh api repos/actions/checkout/releases/latest --jq .tag_name 2>/dev/null)
+SETUP_UV=$(gh api repos/astral-sh/setup-uv/releases/latest --jq .tag_name 2>/dev/null)
+echo "opencode=$OC_VER gga=${GGA_TAG:-v2.10.1} checkout=${CHECKOUT:-v7.0.1} setup-uv=${SETUP_UV:-v10.3.2}"
 ```
+
+Always use the full tag (`v10.3.2`), never the major (`v10`): `astral-sh/setup-uv` stopped publishing moving major tags after `v7`, so `@v10` does not exist and the workflow fails on the first push.
+
+`OC_VER` must be a version that npm publishes for `opencode-ai`, the package CI installs. The OpenCode you run locally may come from another installer with a different version (2.x locally while npm was on 1.19 in October 2026), so never copy `opencode --version` into the workflow.
 
 ### 9.1. Code quality and tests with `uv` (`.github/workflows/ci.yml`)
 
-Replace `<CHECKOUT>` (e.g., `v4`) and `<SETUP_UV>` (e.g., `v5`):
+Replace `<CHECKOUT>` (e.g., `v7.0.1`) and `<SETUP_UV>` (e.g., `v10.3.2`) with the exact tags resolved above:
 
 ```yaml
 name: CI (uv + ruff + pytest)
@@ -484,7 +488,7 @@ concurrency:
 
 jobs:
   verify:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04  # pinned: ubuntu-latest migrates without notice
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@<CHECKOUT>
@@ -533,7 +537,7 @@ concurrency:
 jobs:
   review:
     if: github.event.pull_request.draft == false
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04  # pinned: ubuntu-latest migrates without notice
     timeout-minutes: 15
     continue-on-error: true
     env:
