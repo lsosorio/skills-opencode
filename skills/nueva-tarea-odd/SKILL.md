@@ -81,7 +81,15 @@ Branch: `feat/<NN>-<slug>`
 
 ## 5. Verification evidence
 Pending implementation.
+
+## 6. Log
+
+- L1 (request): <the user's request, verbatim>
+- A1 (assumption): <what the request did not define and did not deserve a question>
+- <date>: <correction, decision or evidence added while implementing>
 ```
+
+`L1` is always the user's own words, never a paraphrase. Every assumption gets an `A<n>` line and is mentioned when the task closes. Later corrections are appended, never rewritten over.
 
 ## 4. Mandatory approval gate
 
@@ -99,12 +107,15 @@ Once the user approves:
    ```
 
 3. Execute the tasks sequentially (`T1` → `T2` → `T3` → `T4`):
+   - Before writing Python, read `references/pep8-checklist.md` of this skill.
    - Follow pragmatic software engineering practices:
      - **English-only code:** all module names, classes, functions, variables, type annotations, docstrings, and test names must be in English.
      - **SRP:** short functions with a single responsibility and a single level of abstraction.
      - **KISS / YAGNI:** modular, direct code without unnecessary layers or interfaces.
      - **Parameter injection:** accept external clients or settings as arguments so `pytest` tests use mocks/stubs without live API calls or heavy model downloads.
      - **Zero magic values:** keep model names, hyperparameters, and file paths in constants or centralized configuration.
+   - Bug fixes (`fix` type): write first the automated test that reproduces the bug and fails; the fix turns it green. Never fix a bug without its test.
+   - Markdown with Python blocks: `ruff format --check .` also formats the Python code blocks of `.md` files that parse as valid Python, so a plan or task with code can fail CI. After editing one, run `uv run ruff format <file.md>`. Blocks that do not parse are ignored silently.
    - Mark each completed task as `- [x]` in `odd/tasks/<NN>-<slug>.md`.
 4. Run verification in `T4`:
 

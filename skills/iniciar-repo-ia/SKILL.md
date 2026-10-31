@@ -588,6 +588,12 @@ Branch: `feat/<NN>-<slug>`
 ## 5. Verification evidence
 - `uv run ruff check .` -> <result>
 - `uv run pytest` -> <result>
+
+## 6. Log
+
+- L1 (request): <the user's request, verbatim>
+- A1 (assumption): <what the request did not define and did not deserve a question>
+- <date>: <correction, decision or evidence added while implementing>
 EOF
 ```
 
