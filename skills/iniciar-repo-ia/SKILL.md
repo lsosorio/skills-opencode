@@ -815,6 +815,8 @@ Set the `DEEPSEEK_API_KEY` repository secret **after pushing** (`gh secret set` 
    ```
 
    Any hit stops the push until the user decides: rotate the key first, and rewrite history only with explicit confirmation. To make public a repository that started private, use the `publicar-repo` skill, which also protects `main` and adds the reviewers.
+
+   If the push fails with `refusing to allow an OAuth App to create or update workflow ... without workflow scope`, the repository already exists on GitHub and is empty: the `gh` token lacks the `workflow` scope that an HTTPS push of `.github/workflows/` needs. Ask the user to run `gh auth refresh -h github.com -s workflow` (interactive), then run `git push -u origin main`. Never remove the workflow to get the push through.
 6. If the remote already exists, ask before running `git push -u origin main`.
 7. After pushing, configure the `DEEPSEEK_API_KEY` secret following step 9.3.
 

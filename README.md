@@ -26,7 +26,7 @@ Tested with: OpenCode 2.1.2 (workshop runs) and 2.2.5 (skills and commands load)
 The skills install without these tools, but they fail at any step that calls a missing one:
 
 - `uv`, for every Python command (`ruff`, `pytest`).
-- `gh`, logged in with `gh auth login`, for remotes, pull requests, reviews and branch protection.
+- `gh`, logged in with `gh auth login -s workflow`, for remotes, pull requests, reviews and branch protection. Without the `workflow` scope, GitHub rejects any HTTPS push that adds or changes `.github/workflows/`. To add the scope to an existing login, run `gh auth refresh -h github.com -s workflow`.
 - GGA, for the AI code review before each commit.
 - Engram, for the shared team memory.
 

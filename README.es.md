@@ -26,7 +26,7 @@ Probado con: OpenCode 2.1.2 (corridas del taller) y 2.2.5 (carga de skills y com
 Las skills se instalan sin estas herramientas, pero fallan en cualquier paso que llame a una que no esté instalada:
 
 - `uv`, para todo comando de Python (`ruff`, `pytest`).
-- `gh`, con sesión iniciada (`gh auth login`), para remotos, pull requests, revisiones y protección de ramas.
+- `gh`, autenticado con `gh auth login -s workflow`, para remotos, pull requests, revisiones y protección de ramas. Sin el permiso `workflow`, GitHub rechaza todo push por HTTPS que agregue o cambie `.github/workflows/`. Para agregar el permiso a una sesión existente, corre `gh auth refresh -h github.com -s workflow`.
 - GGA, para la revisión de código con IA antes de cada commit.
 - Engram, para la memoria compartida del equipo.
 
