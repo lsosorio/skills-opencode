@@ -12,9 +12,9 @@ Collection of skills and global instructions for **OpenCode** powered by **DeepS
 
 ## Installation
 
-Using `-a opencode` installs the skills exclusively into `~/.config/opencode/skills/` without touching `~/.claude/skills/`.
+Tested with: OpenCode 2.1.2 (workshop runs) and 2.2.5 (skills and commands load), GGA 2.10.1, Engram 3.5.4, uv 0.13.1.
 
-### 1. Install all skills with `npx skills`
+### 1. Install the skills with `npx skills`
 
 ```bash
 npx skills add lsosorio/skills-opencode -a opencode -g
@@ -28,12 +28,31 @@ npx skills add lsosorio/skills-opencode --skill nueva-tarea-odd -a opencode -g
 npx skills add lsosorio/skills-opencode --skill cerrar-tarea-pr -a opencode -g
 ```
 
-### 2. Install global instructions (`AGENTS.md`)
+`npx skills` keeps its copy in `~/.agents/skills/` (registered in `~/.agents/.skill-lock.json`), not in `~/.config/opencode/skills/`, and links that copy into the directory of each agent selected with `-a` that needs one (Claude Code: `~/.claude/skills/<name>`). OpenCode reads `~/.agents/skills/` directly. Check with `ls -l ~/.agents/skills/`.
+
+### 2. Or link a local clone
+
+A clone keeps a single copy that `git pull` updates. From the root of the clone:
+
+```bash
+mkdir -p ~/.config/opencode/skills
+for skill in skills/*/; do
+  name=$(basename "$skill")
+  ln -sfn "$PWD/skills/$name" ~/.config/opencode/skills/"$name"
+done
+ls -l ~/.config/opencode/skills/
+```
+
+Use one method per skill: remove an `npx` copy with `npx skills remove -g <name>` before linking the clone. With two copies under the same name OpenCode loads only one, and it may not be the clone.
+
+### 3. Install global instructions (`AGENTS.md`)
 
 ```bash
 mkdir -p ~/.config/opencode
 cp AGENTS.md ~/.config/opencode/AGENTS.md
 ```
+
+With a clone, `ln -sfn "$PWD/AGENTS.md" ~/.config/opencode/AGENTS.md` keeps it in sync.
 
 ## Slash commands
 
@@ -42,6 +61,14 @@ Each file in `commands/` is a slash command that loads its skill. OpenCode reads
 ```bash
 mkdir -p ~/.config/opencode/command
 cp commands/*.md ~/.config/opencode/command/
+```
+
+With a local clone, link them instead so `git pull` updates them:
+
+```bash
+for command in commands/*.md; do
+  ln -sfn "$PWD/$command" ~/.config/opencode/command/"$(basename "$command")"
+done
 ```
 
 | Command | What it does |
