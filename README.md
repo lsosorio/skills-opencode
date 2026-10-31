@@ -7,7 +7,7 @@ Collection of skills and global instructions for **OpenCode** powered by **DeepS
 - `AGENTS.md`: Global instructions covering language, judgment, efficiency, writing style, and Python/AI workflow for `~/.config/opencode/AGENTS.md`.
 - `skills/iniciar-repo-ia/SKILL.md`: Bootstraps public or private repositories and workspaces in Python with `uv` (no `pip`, no Jupyter Notebooks), with an MIT license and a README template, preconfigured with `ruff`, `pytest`, `CONSTITUTION.md`, `AGENTS.md`, shared team memory via Engram, `odd/tasks/_template.md`, GGA (DeepSeek), and GitHub Actions CI.
 - `skills/nueva-tarea-odd/SKILL.md`: Specifies a new requirement under ODD in `odd/tasks/<NN>-<slug>.md`, creates its `feat/<NN>-<slug>` branch, requests confirmation before coding, and implements task by task with `ruff` and `pytest`.
-- `skills/cerrar-tarea-pr/SKILL.md`: Audits code quality (`ruff` + `pytest` + zero `.ipynb`/secrets), completes the document in `odd/tasks/`, exports team memory with `engram sync`, creates a GGA-validated commit, and opens a GitHub Pull Request.
+- `skills/cerrar-tarea-pr/SKILL.md`: Audits code quality (`ruff` + `pytest` + zero `.ipynb`/secrets), completes the document in `odd/tasks/`, exports team memory with `engram sync`, creates a GGA-validated commit, opens a GitHub Pull Request with a reviewer, and cleans up the branch after the merge.
 - `commands/`: one OpenCode slash command per skill, so each skill also appears in the `/` menu.
 
 ## Installation
