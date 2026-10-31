@@ -332,6 +332,7 @@ REJECT if:
 REQUIRE:
 - Explicit type hints on all function and method signatures
 - English naming for all source code identifiers, comments, docstrings, and tests
+- English identifiers, docstrings, comments and test names in every new or modified function; legacy exceptions must be listed under `## Architectural decisions`
 - Environment variables and secrets loaded through centralized configuration, never scattered across logic
 
 PREFER:
