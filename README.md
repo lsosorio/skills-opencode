@@ -54,6 +54,19 @@ cp AGENTS.md ~/.config/opencode/AGENTS.md
 
 With a clone, `ln -sfn "$PWD/AGENTS.md" ~/.config/opencode/AGENTS.md` keeps it in sync.
 
+### Windows
+
+OpenCode reads its configuration from `~/.config/opencode`, which on Windows is `C:\Users\<user>\.config\opencode`. Run the commands of this README from Git Bash. `npx skills add ... -a opencode -g` works the same way; for a manual install copy the folders instead of linking them, because `ln -s` in Git Bash copies by default and `New-Item -ItemType SymbolicLink` needs Developer Mode or an elevated shell:
+
+```bash
+mkdir -p ~/.config/opencode/skills ~/.config/opencode/command
+cp -r skills/* ~/.config/opencode/skills/
+cp commands/*.md ~/.config/opencode/command/
+cp AGENTS.md ~/.config/opencode/AGENTS.md
+```
+
+Repeat the copy after every `git pull` of this repository.
+
 ## Slash commands
 
 Each file in `commands/` is a slash command that loads its skill. OpenCode reads global commands from `~/.config/opencode/command/` (it also accepts `commands/`; keep a single directory so every command loads once). From the root of this repository:

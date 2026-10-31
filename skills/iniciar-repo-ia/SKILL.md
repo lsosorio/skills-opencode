@@ -83,6 +83,20 @@ gh auth setup-git
 gh auth status
 ```
 
+### Windows
+
+Run every command of this skill from the Git for Windows bash (`C:\Program Files\Git\bin\bash.exe`), never from PowerShell and never from the WSL `bash.exe` in `C:\Windows\System32`, which mistranslates repository paths. Install the tools from PowerShell first:
+
+```powershell
+winget install --id Git.Git -e
+winget install --id GitHub.cli -e
+irm https://astral.sh/uv/install.ps1 | iex
+```
+
+Then open Git Bash in the project folder and continue; `gh auth login` is the same command.
+
+Engram installs on Windows with `go install` (see its README) and registers itself in OpenCode with `engram setup opencode`; GGA installs with its Git Bash installer. If `gga install` or `gga run` fail from PowerShell with a repository error, the `gga.bat` wrapper of GGA 2.10.1 sets a variable named `GIT_DIR`, which Git reads as the repository path: rename it to `GIT_CMD_DIR` inside the wrapper.
+
 ## 3. Git and Python environment with `uv`
 
 ### 3.1. Initialize Git
@@ -190,6 +204,12 @@ Create `.env.example` without real secret values:
 DEEPSEEK_API_KEY=
 HF_TOKEN=
 EOF
+```
+
+Create `.gitattributes` so Git for Windows with `core.autocrlf=true` never checks out `scripts/setup.sh` or the hooks with CRLF, which breaks the `#!/usr/bin/env bash` line:
+
+```bash
+[ -f .gitattributes ] || printf '* text=auto\n*.sh text eol=lf\n' > .gitattributes
 ```
 
 To exclude paths locally in this clone only without modifying the tracked `.gitignore`:
@@ -382,7 +402,11 @@ cd <slug>
 uv sync
 ```
 
-Teammates run `./scripts/setup.sh` once after cloning: it syncs `uv`, imports the Engram memory and installs the git hooks.
+Teammates run `./scripts/setup.sh` once after cloning: it syncs `uv`, imports the Engram memory and installs the git hooks. On Windows, run it from PowerShell through the Git for Windows bash:
+
+```powershell
+& "C:\Program Files\Git\bin\bash.exe" scripts/setup.sh
+```
 
 ## Usage
 
@@ -447,6 +471,12 @@ engram init <slug>
   EOF
   chmod +x scripts/setup.sh
   ./scripts/setup.sh
+  ```
+
+  On Windows, teammates run the onboarding from PowerShell through the Git for Windows bash; the `post-merge` and `gga` hooks are bash scripts and Git for Windows runs them with its own `sh`:
+
+  ```powershell
+  & "C:\Program Files\Git\bin\bash.exe" scripts/setup.sh
   ```
 
 - **Workspace:** run `engram init <slug>` at the root **and** in each repo using the **same** slug. Ask which repo syncs `.engram/chunks/`. In all other repos, add `.engram/chunks/` and `.engram/manifest.json` to `.gitignore` to avoid desynchronized exports.
