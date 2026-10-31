@@ -1,6 +1,6 @@
 ---
 name: iniciar-repo-ia
-description: Bootstraps a Python and Artificial Intelligence repository or workspace with uv for OpenCode and DeepSeek (init repo, start AI project, new uv workspace, iniciar repo). Configures git, private GitHub remote, packaged uv project (no pip, no Jupyter Notebooks), ruff, pytest, CONSTITUTION.md, AGENTS.md with software engineering rules, shared Engram memory, odd/tasks, GGA with DeepSeek, and GitHub Actions CI.
+description: Bootstraps a Python and Artificial Intelligence repository or workspace with uv for OpenCode and DeepSeek (init repo, start AI project, new uv workspace, iniciar repo). Configures git, a public or private GitHub remote, an MIT license, packaged uv project (no pip, no Jupyter Notebooks), ruff, pytest, CONSTITUTION.md, AGENTS.md with software engineering rules, a README template, shared Engram memory, odd/tasks, GGA with DeepSeek, and GitHub Actions CI.
 ---
 
 # iniciar-repo-ia
@@ -26,7 +26,8 @@ Extract whatever is already provided in the user's request and ask for the missi
   - *Standalone repo* (default).
   - *Repo inside a workspace:* the parent directory groups multiple repos for a single product. Runs inside the repo; if the root does not yet have `AGENTS.md` or `.engram/`, this skill creates them (steps 4 and 5).
   - *Workspace with existing repos:* runs at the workspace root.
-- **Remote:** does it already exist? If not, offer to create it as **private** (`--private`) in step 10.
+- **Remote:** does it already exist? If not, offer to create it in step 10 with the visibility below.
+- **Visibility:** `public` or `private`. Academic deliverables that will be graded usually need a public repository and an MIT license.
 
 If the current directory name contains spaces, warn the user: spaces in paths require quoting across all scripts. Propose renaming the directory to the *slug* before continuing.
 
@@ -43,7 +44,7 @@ ls -la
 - **Without `git` or `uv`, stop before touching files** and provide the installation commands below.
 - **Without `gh` or an active `gh` session, and with a remote requested, stop before creating files** and provide the setup commands below. Finding out at the end leaves the push and CI secret incomplete. If no remote was requested, continue and log it as pending.
 - Any other missing tool is reported at the end and does not block the remaining steps.
-- Existing files (`CONSTITUTION.md`, `AGENTS.md`, `pyproject.toml`, `.gga`, `.engram/`, `.gitignore`, `.dockerignore`, `.github/workflows/`): never overwrite without asking.
+- Existing files (`CONSTITUTION.md`, `AGENTS.md`, `README.md`, `LICENSE`, `pyproject.toml`, `.gga`, `.engram/`, `.gitignore`, `.dockerignore`, `.github/workflows/`): never overwrite without asking.
 - **Workspace:** repos are directories containing `pyproject.toml` or `.git`, not necessarily top-level folders. Locate them with:
 
   ```bash
@@ -197,7 +198,18 @@ To exclude paths locally in this clone only without modifying the tracked `.giti
 exclude_local() { f="$(git rev-parse --git-dir)/info/exclude"; grep -qxF "$1" "$f" 2>/dev/null || echo "$1" >> "$f"; }
 ```
 
-## 4. CONSTITUTION.md and AGENTS.md
+### 3.4. LICENSE
+
+```bash
+YEAR=$(date +%Y); HOLDER="$(git config user.name)"
+[ -f LICENSE ] || gh api licenses/mit --jq .body | sed "s/\[year\]/$YEAR/; s/\[fullname\]/$HOLDER/" > LICENSE
+grep -q '^license = ' pyproject.toml || sed -i '/^readme = /a license = "MIT"\nlicense-files = ["LICENSE"]' pyproject.toml
+uv sync --locked 2>/dev/null || uv lock
+```
+
+Ask before choosing a license other than MIT; never put data-rights clarifications inside LICENSE, put them in the README.
+
+## 4. CONSTITUTION.md, AGENTS.md, and README.md
 
 Separating the architectural contract (`CONSTITUTION.md`) from the diff-level review rules (`AGENTS.md`) keeps `AGENTS.md` fast and under GGA's 200-line limit while giving OpenCode a clear, immutable set of engineering standards and a Definition of Done (DoD).
 
@@ -330,6 +342,82 @@ PREFER:
 ```
 
 In a **workspace**: create an `AGENTS.md` at the root containing only shared context and a table of repos with their `Status` (without the GGA block), plus a full `AGENTS.md` inside each repo using the template above.
+
+### 4.3. `README.md` (project front page)
+
+`uv init` leaves an empty `README.md`; write this template into it. If `README.md` already has content, show it and ask whether to add the missing sections.
+
+````markdown
+# <Project Name>
+
+[![CI](https://github.com/<owner>/<slug>/actions/workflows/ci.yml/badge.svg)](https://github.com/<owner>/<slug>/actions/workflows/ci.yml)
+[![Python 3.12](https://img.shields.io/badge/python-3.12-blue)](https://www.python.org/)
+[![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
+<description from step 1>
+
+## Problem and solution
+
+<The problem, who has it, and how this project solves it, in three to five lines.>
+
+## Architecture
+
+```mermaid
+flowchart LR
+    input[Input data] --> core[src/<package>] --> output[Results]
+```
+
+<One line per component: what it reads, what it writes, and why it is separate.>
+
+## Install
+
+Requires Python 3.12 and [`uv`](https://docs.astral.sh/uv/).
+
+```bash
+git clone https://github.com/<owner>/<slug>.git
+cd <slug>
+uv sync
+```
+
+Teammates run `./scripts/setup.sh` once after cloning: it syncs `uv`, imports the Engram memory and installs the git hooks.
+
+## Usage
+
+```bash
+uv run <slug>
+```
+
+<The main commands, each with a real example of input and output.>
+
+## Structure
+
+```text
+src/<package>/   source code
+tests/           pytest tests, no network
+data/            raw/ and processed/ data, not versioned
+odd/tasks/       one specification per task
+```
+
+## Screenshots
+
+<Images of the main result stored in docs/img/; delete this section if the project has no visual output.>
+
+## Contributing
+
+Specify each change under ODD with the `nueva-tarea-odd` skill, keep `uv run ruff check .`, `uv run ruff format --check .` and `uv run pytest` green, and close it with `cerrar-tarea-pr`, which opens the pull request with a reviewer. The rules are in `CONSTITUTION.md` and `AGENTS.md`.
+
+## License
+
+Code under the [MIT License](LICENSE). <Rights of the third-party data the project captures or uses, and whether it is redistributed.>
+
+## Credits
+
+<Authors, course or organization, and each data source with its owner.>
+````
+
+Fill every placeholder with what step 1 provides; a section with nothing to say yet keeps one `TODO:` line instead of invented content. If step 3.4 used another license, change the badge and the License section to match.
 
 ## 5. Engram (Shared project memory)
 
@@ -587,19 +675,29 @@ Set the `DEEPSEEK_API_KEY` repository secret **after pushing** (`gh secret set` 
 
 **Zero-cost fallback:** to use GitHub Models in CI without consuming DeepSeek API credits, add `models: read` under `permissions` and set `GGA_PROVIDER: github:deepseek/DeepSeek-V3-0324` and `GH_TOKEN: ${{ github.token }}` under `env`.
 
-## 10. Private remote and initial commit (with confirmation)
+## 10. Remote and initial commit (with confirmation)
 
 1. Format the codebase with `uv run ruff format .` and inspect `git status --short`.
 2. Verify that `git status --short` does **not** include `.env`, credentials, or unexpected artifacts.
 3. Ask for confirmation before creating the initial commit.
 4. Commit using Conventional Commits: `chore: bootstrap repository with uv and baseline rules`.
-5. If no remote is configured, ask for confirmation to create a **private** repository and push:
+5. If no remote is configured, ask for confirmation to create the repository with the visibility chosen in step 1 and push:
 
    ```bash
-   gh repo create <owner>/<slug> --private --source . --remote origin --push
+   gh repo create <owner>/<slug> --<visibility> --source . --remote origin --push
    ```
 
-   *(Default `<owner>` is the active account in `gh auth status`).*
+   *(Default `<owner>` is the active account in `gh auth status`; `<visibility>` is `public` or `private`).*
+
+   For a **public** repository, audit what the push will publish before running it, because the whole history becomes visible:
+
+   ```bash
+   git ls-files | grep -E '(^|/)\.env$|\.(pem|key|p12)$' || echo "ok: no .env or keys tracked"
+   git ls-files | grep -E '\.(ipynb|bin|pt|pth|safetensors|gguf|onnx)$' || echo "ok: no notebooks or weights tracked"
+   git log -p --all | grep -nE 'DEEPSEEK_API_KEY=[^ ]|HF_TOKEN=[^ ]|sk-[A-Za-z0-9]{20,}|ghp_[A-Za-z0-9]{20,}' || echo "ok: no secrets in history"
+   ```
+
+   Any hit stops the push until the user decides: rotate the key first, and rewrite history only with explicit confirmation.
 6. If the remote already exists, ask before running `git push -u origin main`.
 7. After pushing, configure the `DEEPSEEK_API_KEY` secret following step 9.3.
 
@@ -612,7 +710,7 @@ Verify with real commands—do not assume:
 - `cat .engram/config.json` (if `engram` is installed) → matches the expected *slug*.
 - `[ -x "$(git rev-parse --git-dir)/hooks/post-merge" ]` → hook is executable and imports `.engram/chunks/` on every `git pull`.
 - `git status --short` → clean working tree with `.env` ignored.
-- `CONSTITUTION.md`, `AGENTS.md`, and `odd/tasks/_template.md` → exist.
-- If pushed: `gh workflow list` shows `CI (uv + ruff + pytest)` and `GGA Review (DeepSeek)`, and `gh secret list` shows `DEEPSEEK_API_KEY` (if configured).
+- `CONSTITUTION.md`, `AGENTS.md`, `README.md`, `LICENSE`, and `odd/tasks/_template.md` → exist; `grep '^license = ' pyproject.toml` → the chosen license.
+- If pushed: `gh workflow list` shows `CI (uv + ruff + pytest)` and `GGA Review (DeepSeek)`, `gh secret list` shows `DEEPSEEK_API_KEY` (if configured), and `gh repo view <owner>/<slug> --json visibility,licenseInfo` shows the visibility chosen in step 1 and the license.
 
 Close with a concise table summarizing created items, any failures, and pending actions (missing tools or CI secret).
