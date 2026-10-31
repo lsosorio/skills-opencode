@@ -1,4 +1,8 @@
+[English](README.md) · [Español](README.es.md)
+
 # OpenCode + DeepSeek Skills (Python & AI with `uv`)
+
+Keep `README.es.md` in sync: any change to this file updates the Spanish version in the same commit.
 
 Collection of skills and global instructions for **OpenCode** powered by **DeepSeek**, tailored for **Python and Artificial Intelligence** projects using **`uv`**, pragmatic software engineering best practices, **ODD (`odd/tasks`)**, **Engram**, and **GGA**.
 
@@ -27,6 +31,7 @@ Or install a single skill:
 npx skills add lsosorio/skills-opencode --skill iniciar-repo-ia -a opencode -g
 npx skills add lsosorio/skills-opencode --skill nueva-tarea-odd -a opencode -g
 npx skills add lsosorio/skills-opencode --skill cerrar-tarea-pr -a opencode -g
+npx skills add lsosorio/skills-opencode --skill revisar-pr -a opencode -g
 ```
 
 `npx skills` keeps its copy in `~/.agents/skills/` (registered in `~/.agents/.skill-lock.json`), not in `~/.config/opencode/skills/`, and links that copy into the directory of each agent selected with `-a` that needs one (Claude Code: `~/.claude/skills/<name>`). OpenCode reads `~/.agents/skills/` directly. Check with `ls -l ~/.agents/skills/`.
