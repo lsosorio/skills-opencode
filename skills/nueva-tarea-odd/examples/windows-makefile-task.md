@@ -130,3 +130,15 @@ README.md                          modified
 ## 6. Final state
 
 All criteria and tasks are `[x]`, `## 5. Verification evidence` holds the real outputs, and the closing message repeats assumption A1. The branch is ready for `cerrar-tarea-pr`, which sets `Status: completed`, syncs Engram and opens the pull request (see its example `close-task-09.md`).
+
+## Small change
+
+A week later a teammate asked: "Fix the typo 'recieve' in the Install section of the README." The agent classified it with §1.1 as small (the request and `git diff` are enough to resume it), so it created no `odd/tasks/` file:
+
+```text
+$ git switch -c "docs/fix-readme-typo"
+$ git diff --stat
+ README.md | 2 +-
+```
+
+`cerrar-tarea-pr` skipped its step 3, made the single commit `docs(readme): fix a typo in the install section` and opened the pull request with one paragraph (what changed, plus the `ruff`, `pytest` and `gga run` results) followed by the Definition of Done template.

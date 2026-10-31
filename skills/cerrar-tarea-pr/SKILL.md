@@ -19,7 +19,8 @@ Cleanly and reproducibly closes a feature branch before sharing it with the team
    ls -1 odd/tasks/
    ```
 
-2. **If currently on `main`:** warn the user and propose creating a `feat/<NN>-<slug>` branch before committing so the change goes through Pull Request and CI review.
+2. **If currently on `main`:** warn the user and propose creating a `feat/<NN>-<slug>` branch (`fix/<slug>` or `docs/<slug>` for a small change) before committing so the change goes through Pull Request and CI review.
+3. **Small change:** if the branch has no ODD task because the change was classified as small (`nueva-tarea-odd` §1.1), skip step 3: the evidence (ruff, pytest, GGA) goes to the PR body, which is the Definition of Done template plus one paragraph describing the change.
 
 ## 2. Constraint audit and quality checks with `uv`
 
@@ -47,6 +48,8 @@ uv run pytest -v
 Both `ruff check` and `pytest` must exit with code `0`.
 
 ## 3. Complete the document in `odd/tasks/`
+
+If the branch has no ODD task because the change was classified as small, skip step 3: the evidence (ruff, pytest, GGA) goes to the PR body, which is the Definition of Done template plus one paragraph describing the change (see 5.4).
 
 Update the `odd/tasks/<NN>-<slug>.md` file for the current branch:
 
@@ -133,6 +136,13 @@ gh pr create --title "<type>(<scope>): <short description>" --body-file "$BODY_F
 ```
 
 If the repository has no `.github/PULL_REQUEST_TEMPLATE.md` (it was bootstrapped before `iniciar-repo-ia` created one), the body is the ODD task alone.
+
+For a small change there is no task: the body is one paragraph with what changed, why, and the ruff, pytest and GGA results, followed by the template, whose ODD task item stays unchecked as not applicable:
+
+```bash
+printf '%s\n\n' "<one paragraph: what changed, why, and the ruff, pytest and GGA results>" > "$BODY_FILE"
+cat .github/PULL_REQUEST_TEMPLATE.md >> "$BODY_FILE"
+```
 
 ### 5.5. Report
 

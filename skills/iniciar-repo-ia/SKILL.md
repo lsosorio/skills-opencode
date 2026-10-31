@@ -405,7 +405,7 @@ Stack: Python (>=3.12) managed exclusively with `uv`.
 
 ## Team workflow and ODD
 - **First-time clone onboarding:** run `./scripts/setup.sh` (syncs `uv`, imports Engram memory, and installs local `gga` and `post-merge` hooks).
-- **Specify before coding (ODD):** use the `nueva-tarea-odd` skill (or create `odd/tasks/<NN>-<slug>.md` from `odd/tasks/_template.md`) and get user approval before writing code in `src/`.
+- **Specify before coding (ODD):** for a substantial change, use the `nueva-tarea-odd` skill (or create `odd/tasks/<NN>-<slug>.md` from `odd/tasks/_template.md`) and get user approval before writing code in `src/`. A small change (a typo, one function, a documentation paragraph) needs no task: a `fix/` or `docs/` branch and one commit, as `nueva-tarea-odd` §1.1 explains.
 - **Closing a task:** use the `cerrar-tarea-pr` skill (or run `uv run ruff check .`, `uv run pytest`, record verification evidence in `odd/tasks/`, and run `engram sync && git add .engram/` before committing).
 
 ## Architectural decisions

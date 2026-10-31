@@ -1,13 +1,13 @@
 ---
 name: nueva-tarea-odd
-description: Starts, specifies, and implements a new Python/AI requirement or experiment following ODD in odd/tasks/ with uv in OpenCode and DeepSeek (new task, specify feature, implement ODD task, nueva tarea). Syncs main and Engram, creates the feat/<NN>-<slug> branch, drafts odd/tasks/<NN>-<slug>.md, requests approval before coding, and implements task by task with ruff and pytest.
+description: Starts, specifies, and implements a new Python/AI requirement or experiment following ODD in odd/tasks/ with uv in OpenCode and DeepSeek (new task, specify feature, implement ODD task, nueva tarea). Classifies the change as small or substantial first; for a substantial one, syncs main and Engram, creates the feat/<NN>-<slug> branch, drafts odd/tasks/<NN>-<slug>.md, requests approval before coding, and implements task by task with ruff and pytest.
 ---
 
 # nueva-tarea-odd
 
 Guides the full lifecycle of a requirement under **ODD (Organic-Driven Development)** in Python and Artificial Intelligence projects using **`uv`**, **Engram**, and **GGA**: first specify and validate the design in `odd/tasks/`, then implement incrementally in `src/` and `tests/`.
 
-- **Golden rule:** never write or modify code in `src/` or `tests/` before `odd/tasks/<NN>-<slug>.md` is created and approved by the user.
+- **Golden rule:** for a substantial change (see 1.1), never write or modify code in `src/` or `tests/` before `odd/tasks/<NN>-<slug>.md` is created and approved by the user.
 - **Environment constraints:** never create `.ipynb` files, never use `pip install`, always include explicit type hints, and write all code identifiers, docstrings, comments, and tests in **English**.
 
 ## 1. Initial context and synchronization
@@ -27,6 +27,14 @@ Guides the full lifecycle of a requirement under **ODD (Organic-Driven Developme
    ```
 
 4. Query Engram for prior project decisions (`engram context` or the Engram MCP tool if active) and read `CONSTITUTION.md` and `AGENTS.md` to identify the package path `src/<package>/`, architectural boundaries, and active project rules.
+
+### 1.1. Classify the change before specifying
+
+A change is **small** when a teammate could resume it with the request and `git diff` alone: a typo, one function, a documentation paragraph, a configuration value. Counting files, lines or tests does not decide. Everything else is **substantial**.
+
+- Small: no `odd/tasks/` file. Branch `fix/<slug>` or `docs/<slug>`, one Conventional Commit, and `cerrar-tarea-pr` with a one-paragraph PR body. Documentation-only changes are small unless they amend `CONSTITUTION.md`.
+- Substantial: steps 2 to 5 of this skill.
+- Promotion: if a small change reveals a design decision or needs a second iteration, stop and create the task before continuing.
 
 ## 2. Task numbering and branch creation
 
