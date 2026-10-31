@@ -14,6 +14,7 @@ Collection of skills and global instructions for **OpenCode** powered by **DeepS
 - `skills/cerrar-tarea-pr/SKILL.md`: Audits code quality (`ruff` + `pytest` + zero `.ipynb`/secrets), completes the document in `odd/tasks/`, exports team memory with `engram sync`, creates a GGA-validated commit, opens a GitHub Pull Request with a reviewer, and cleans up the branch after the merge.
 - `skills/revisar-pr/SKILL.md`: Reviews a teammate's pull request against `CONSTITUTION.md` and `AGENTS.md` with `ruff`, `pytest` and GGA, and submits one GitHub review whose findings carry file, line, rule and severity. It never merges.
 - `commands/`: one OpenCode slash command per skill, so each skill also appears in the `/` menu.
+- `scripts/validate_skills.sh` and `.github/workflows/validate.yml`: repository checks, described in [Validation](#validation).
 
 ## Installation
 
@@ -133,3 +134,13 @@ After installing, restart `opencode` and invoke the desired skill in chat:
 
 4. **Review a teammate's Pull Request (`revisar-pr`):**
    > *"Use `revisar-pr` on pull request 12."*
+
+## Validation
+
+[![validate](https://github.com/lsosorio/skills-opencode/actions/workflows/validate.yml/badge.svg)](https://github.com/lsosorio/skills-opencode/actions/workflows/validate.yml)
+
+`scripts/validate_skills.sh` checks the frontmatter of every skill (name equal to its folder, a description of at most 1024 characters), that every `examples/` and `references/` file a `SKILL.md` mentions exists, that every slash command has its skill, the known regressions (`ubuntu-latest` and floating action tags) and that both READMEs have the same sections. The `validate` workflow runs it on every push to `main` and on every pull request. Run it before each commit:
+
+```bash
+bash scripts/validate_skills.sh    # OK: skills repository valid
+```

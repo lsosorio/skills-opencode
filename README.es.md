@@ -14,6 +14,7 @@ Colección de skills e instrucciones globales para **OpenCode** con **DeepSeek**
 - `skills/cerrar-tarea-pr/SKILL.md`: audita la calidad del código (`ruff` + `pytest` + cero `.ipynb` y secretos), completa el documento en `odd/tasks/`, exporta la memoria del equipo con `engram sync`, crea un commit validado por GGA, abre un Pull Request en GitHub con revisor y limpia la rama después del merge.
 - `skills/revisar-pr/SKILL.md`: revisa el pull request de un compañero contra `CONSTITUTION.md` y `AGENTS.md` con `ruff`, `pytest` y GGA, y envía una sola revisión en GitHub cuyos hallazgos indican archivo, línea, regla y severidad. Nunca hace merge.
 - `commands/`: un comando `/` de OpenCode por skill, para que cada skill aparezca también en el menú `/`.
+- `scripts/validate_skills.sh` y `.github/workflows/validate.yml`: verificaciones del repositorio, descritas en [Validación](#validación).
 
 ## Instalación
 
@@ -133,3 +134,13 @@ Después de instalar, reinicia `opencode` e invoca en el chat la skill que neces
 
 4. **Revisar el Pull Request de un compañero (`revisar-pr`):**
    > *"Usa `revisar-pr` en el pull request 12."*
+
+## Validación
+
+[![validate](https://github.com/lsosorio/skills-opencode/actions/workflows/validate.yml/badge.svg)](https://github.com/lsosorio/skills-opencode/actions/workflows/validate.yml)
+
+`scripts/validate_skills.sh` revisa el frontmatter de cada skill (nombre igual a su carpeta, descripción de 1024 caracteres como máximo), que exista cada archivo de `examples/` y `references/` que menciona un `SKILL.md`, que cada comando `/` tenga su skill, las regresiones conocidas (`ubuntu-latest` y tags flotantes de las actions) y que los dos README tengan las mismas secciones. El workflow `validate` lo corre en cada push a `main` y en cada pull request. Córrelo antes de cada commit:
+
+```bash
+bash scripts/validate_skills.sh    # OK: skills repository valid
+```
