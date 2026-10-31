@@ -122,13 +122,17 @@ git commit -m "<type>(<scope>): <short description>"
 
 ### 5.4. Push and open the Pull Request
 
-Push the branch and create the GitHub Pull Request with the ODD task document as the body and the reviewer from 5.1:
+Push the branch and create the GitHub Pull Request with the reviewer from 5.1. The body is the ODD task followed by the Definition of Done checklist of `.github/PULL_REQUEST_TEMPLATE.md`:
 
 ```bash
 BRANCH="$(git branch --show-current)"
+BODY_FILE="$(mktemp)"
+cat "odd/tasks/<NN>-<slug>.md" .github/PULL_REQUEST_TEMPLATE.md > "$BODY_FILE"
 git push -u origin "$BRANCH"
-gh pr create --title "<type>(<scope>): <short description>" --body-file "odd/tasks/<NN>-<slug>.md" --reviewer "<login>"
+gh pr create --title "<type>(<scope>): <short description>" --body-file "$BODY_FILE" --reviewer "<login>"
 ```
+
+If the repository has no `.github/PULL_REQUEST_TEMPLATE.md` (it was bootstrapped before `iniciar-repo-ia` created one), the body is the ODD task alone.
 
 ### 5.5. Report
 

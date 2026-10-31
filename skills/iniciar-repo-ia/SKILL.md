@@ -229,6 +229,75 @@ uv sync --locked 2>/dev/null || uv lock
 
 Ask before choosing a license other than MIT; never put data-rights clarifications inside LICENSE, put them in the README.
 
+### 3.5. `CHANGELOG.md`
+
+Run figures (counts, sizes, durations, run ids) go here, never to `AGENTS.md`, which keeps only rules and their rationale:
+
+```bash
+[ -f CHANGELOG.md ] || printf '# Changelog\n\nRun figures and notable changes, newest first. Rules and decisions live in `AGENTS.md`.\n\n## Unreleased\n\n- Project bootstrapped with `iniciar-repo-ia`.\n' > CHANGELOG.md
+```
+
+### 3.6. `Makefile`
+
+Team shortcuts. On Windows GNU make is native and cannot resolve `/usr/bin/env`, so `SHELL` points to the Git for Windows bash. Recipes start with a tab, never spaces. Write the file only if it does not exist:
+
+```makefile
+ifeq ($(OS),Windows_NT)
+GIT_BASH ?= $(firstword $(wildcard C:/Progra~1/Git/bin/bash.exe) $(wildcard C:/Progra~2/Git/bin/bash.exe) $(wildcard $(LOCALAPPDATA)/Programs/Git/bin/bash.exe))
+ifeq ($(GIT_BASH),)
+$(error Git Bash not found. Install Git for Windows or pass GIT_BASH=<path to bash.exe>)
+endif
+SHELL := $(GIT_BASH)
+else
+SHELL := /usr/bin/env bash
+endif
+.SHELLFLAGS := -eu -o pipefail -c
+.DEFAULT_GOAL := help
+UV ?= uv
+
+.PHONY: help setup lint format format-check test check
+
+help: ## Show this help
+	@grep -E '^[a-zA-Z_-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  %-14s %s\n", $$1, $$2}'
+
+setup: ## Sync the environment, import Engram and install the hooks
+	./scripts/setup.sh
+
+lint: ## Run ruff check
+	$(UV) run ruff check .
+
+format: ## Format with ruff
+	$(UV) run ruff format .
+
+format-check: ## Verify formatting
+	$(UV) run ruff format --check .
+
+test: ## Run pytest
+	$(UV) run pytest
+
+check: format-check lint test ## Everything CI runs
+```
+
+### 3.7. Pull request template
+
+GitHub fills the PR body with this file when the PR is opened from the web. `cerrar-tarea-pr` builds the body as the ODD task followed by this checklist:
+
+```bash
+mkdir -p .github
+[ -f .github/PULL_REQUEST_TEMPLATE.md ] || cat << 'EOF' > .github/PULL_REQUEST_TEMPLATE.md
+## Definition of Done
+
+- [ ] Complies with `CONSTITUTION.md` and `AGENTS.md`
+- [ ] ODD task in `completed` with real evidence
+- [ ] `uv run ruff format --check .` and `uv run ruff check .` pass
+- [ ] `uv run pytest` passes without network
+- [ ] No notebooks, secrets, `requirements.txt` or model weights
+- [ ] Documentation updated (`README.md`, `AGENTS.md` decisions, `CHANGELOG.md` figures)
+- [ ] `.engram/` exported in the commit
+- [ ] CI and GGA green; reviewer assigned
+EOF
+```
+
 ## 4. CONSTITUTION.md, AGENTS.md, and README.md
 
 Separating the architectural contract (`CONSTITUTION.md`) from the diff-level review rules (`AGENTS.md`) keeps `AGENTS.md` fast and under GGA's 200-line limit while giving OpenCode a clear, immutable set of engineering standards and a Definition of Done (DoD).
@@ -326,6 +395,8 @@ Stack: Python (>=3.12) managed exclusively with `uv`.
 - `odd/tasks/`: task and feature specifications (based on `odd/tasks/_template.md`).
 - `.engram/`: shared project memory (`config.json`, `manifest.json`, and `chunks/`).
 - `scripts/setup.sh`: team onboarding script to configure the local environment and git hooks after cloning.
+- `Makefile`: team shortcuts; `make check` runs what CI runs.
+- `CHANGELOG.md`: run figures (counts, sizes, durations) and notable changes, newest first.
 
 ## Team workflow and ODD
 - **First-time clone onboarding:** run `./scripts/setup.sh` (syncs `uv`, imports Engram memory, and installs local `gga` and `post-merge` hooks).
@@ -333,7 +404,7 @@ Stack: Python (>=3.12) managed exclusively with `uv`.
 - **Closing a task:** use the `cerrar-tarea-pr` skill (or run `uv run ruff check .`, `uv run pytest`, record verification evidence in `odd/tasks/`, and run `engram sync && git add .engram/` before committing).
 
 ## Architectural decisions
-Record every significant design decision here with its date and rationale.
+Record every significant design decision here with its date and rationale. Run figures go to `CHANGELOG.md`, never here.
 
 ## Code review rules (GGA)
 
