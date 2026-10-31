@@ -21,6 +21,15 @@ Collection of skills and global instructions for **OpenCode** powered by **DeepS
 
 Tested with: OpenCode 2.1.2 (workshop runs) and 2.2.5 (skills and commands load), GGA 2.10.1, Engram 3.5.4, uv 0.13.1.
 
+### Requirements
+
+The skills install without these tools, but they fail at any step that calls a missing one:
+
+- `uv`, for every Python command (`ruff`, `pytest`).
+- `gh`, logged in with `gh auth login`, for remotes, pull requests, reviews and branch protection.
+- GGA, for the AI code review before each commit.
+- Engram, for the shared team memory.
+
 ### 1. Install the skills with `npx skills`
 
 ```bash
@@ -38,6 +47,8 @@ npx skills add lsosorio/skills-opencode --skill publicar-repo -a opencode -g
 ```
 
 `npx skills` keeps its copy in `~/.agents/skills/` (registered in `~/.agents/.skill-lock.json`), not in `~/.config/opencode/skills/`, and links that copy into the directory of each agent selected with `-a` that needs one (Claude Code: `~/.claude/skills/<name>`). OpenCode reads `~/.agents/skills/` directly. Check with `ls -l ~/.agents/skills/`.
+
+`npx skills` installs only the skill folders, the ones with a `SKILL.md`. The `/` commands in `commands/` and the global `AGENTS.md` come from a clone: see step 3 and [Slash commands](#slash-commands). The installed copies do not update on their own: `npx skills check` lists new versions and `npx skills update` installs them.
 
 ### 2. Or link a local clone
 
