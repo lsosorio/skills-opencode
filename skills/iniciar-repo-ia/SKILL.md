@@ -528,11 +528,14 @@ Write `.gga` directly (do not run `gga init`):
 
 ```ini
 PROVIDER="opencode:deepseek/deepseek-flash"
+FILE_PATTERNS="*.py,*.go,*.ts,*.tsx,*.js,*.jsx,Makefile,*.md,*.toml,*.yml,*.yaml,*.sh,Dockerfile,.env.example"
 RULES_FILE="AGENTS.md"
 STRICT_MODE="true"
 PR_BASE_BRANCH="main"
 EXCLUDE_PATTERNS="uv.lock,*.lock,.engram/*,*.jsonl.gz,*.jsonl,*.min.js,*.min.css,*.map,*.svg,*.png,*.jpg,*.jpeg,*.gif,*.ico,*.pdf,*.woff,*.woff2"
 ```
+
+`FILE_PATTERNS` decides what GGA reviews. Without it, GGA 2.10.1 reviews every staged file that `EXCLUDE_PATTERNS` does not drop and pastes binaries into the prompt as well, while `gga init` writes `*.ts,*.tsx,*.js,*.jsx` and a teammate's global `~/.config/gga/config` can narrow the list on one machine; the project value overrides both. This list covers code, the Makefile, Markdown (plans, ODD tasks, README) and the configuration files where `REJECT` rules apply (`pyproject.toml`, workflows, scripts, `Dockerfile`, `.env.example`). Add a pattern when the project adds another text format.
 
 Then install the pre-commit hook and verify configuration (if `gga` is installed):
 

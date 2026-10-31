@@ -76,6 +76,20 @@ So teammates receive the context of what was built when they run `git pull`:
 
 ## 5. Commit, push, and Pull Request (with confirmation)
 
+### 5.0. Run GGA before the commit
+
+`gga run` reviews the staged files only, so stage the changes first:
+
+```bash
+git add -A
+gga run
+```
+
+Fix every violation it reports, stage the fixes with `git add -A` and run it again until it prints `STATUS: PASSED`. Two cases are different:
+
+- `STATUS: FAILED`: fix the violation. Never disable the hook and never use `git commit --no-verify` to skip a rejection.
+- Ambiguous result (strict mode cannot find the `STATUS:` line because the model narrates before answering): set `STRICT_MODE="false"` in `.gga` only for this local review, read the whole review, apply its findings, restore `STRICT_MODE="true"` before committing and record the review in the ODD task evidence. `--no-verify` is allowed only with the team's explicit authorization, after that full review, and the task document must say so.
+
 ### 5.1. Show the release plan
 
 Show the user:
@@ -104,7 +118,7 @@ If anything unexpected appears, unstage it with `git restore --staged <path>` an
 git commit -m "<type>(<scope>): <short description>"
 ```
 
-*(When `git commit` runs, the local **GGA** pre-commit hook audits the diff with DeepSeek against `AGENTS.md`. If GGA rejects the commit, fix the reported violation and retry).*
+*(When `git commit` runs, the local **GGA** pre-commit hook audits the diff with DeepSeek against `AGENTS.md`; files that already passed in 5.0 come from GGA's cache. If GGA rejects the commit, fix the reported violation and retry).*
 
 ### 5.4. Push and open the Pull Request
 
