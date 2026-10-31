@@ -127,11 +127,16 @@ Append `ruff` and `pytest` settings to `pyproject.toml` if not already present:
 
 ```toml
 [tool.ruff]
+# PEP 8 recommends 79 characters; the team agreed on 100.
 line-length = 100
 target-version = "py312"
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "B", "UP", "N", "SIM"]
+select = ["E", "W", "F", "I", "B", "UP", "N", "SIM", "D", "ANN"]
+ignore = ["D1"]  # docstrings are not mandatory; when present they follow PEP 257
+
+[tool.ruff.lint.pydocstyle]
+convention = "pep257"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -425,6 +430,7 @@ REQUIRE:
 - English naming for all source code identifiers, comments, docstrings, and tests
 - English identifiers, docstrings, comments and test names in every new or modified function; legacy exceptions must be listed under `## Architectural decisions`
 - Environment variables and secrets loaded through centralized configuration, never scattered across logic
+- PEP 8 enforced by `ruff` (`E`, `W`, `N`, `D`, `I`, `ANN`); the reviewer checks the rest with the PEP 8 checklist of the `revisar-pr` skill
 
 PREFER:
 - Single Responsibility Principle (SRP): each module and function does one thing well; short functions at a single level of abstraction
