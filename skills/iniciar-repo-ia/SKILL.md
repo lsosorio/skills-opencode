@@ -825,3 +825,7 @@ Verify with real commands—do not assume:
 - If pushed: `gh workflow list` shows `CI (uv + ruff + pytest)` and `GGA Review (DeepSeek)`, `gh secret list` shows `DEEPSEEK_API_KEY` (if configured), and `gh repo view <owner>/<slug> --json visibility,licenseInfo` shows the visibility chosen in step 1 and the license.
 
 Close with a concise table summarizing created items, any failures, and pending actions (missing tools or CI secret).
+
+## Example
+
+See `examples/bootstrap-corpus-acme.md` for a complete walkthrough.

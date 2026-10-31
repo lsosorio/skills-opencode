@@ -149,3 +149,7 @@ git branch -d "feat/<NN>-<slug>"
 ```
 
 `--delete-branch` removes the remote branch and, when it can, the local one; the last line cleans up the local branch otherwise. After a squash merge Git does not see the branch as merged, so `git branch -d` refuses: use `git branch -D` only after `gh pr view "<n>" --json state` reports `MERGED`.
+
+## Example
+
+See `examples/close-task-09.md` for a complete walkthrough.

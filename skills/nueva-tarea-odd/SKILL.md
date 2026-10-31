@@ -126,3 +126,7 @@ Once the user approves:
    ```
 
 5. Once all checks pass, update `## 5. Verification evidence` in `odd/tasks/<NN>-<slug>.md` with the actual `ruff` and `pytest` output, mark satisfied acceptance criteria (`[x]`), and let the user know they can inspect the changes or run `cerrar-tarea-pr` to sync Engram and open the Pull Request.
+
+## Example
+
+See `examples/windows-makefile-task.md` for a complete walkthrough.

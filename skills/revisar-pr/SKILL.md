@@ -149,3 +149,7 @@ The merge belongs to the author, with explicit confirmation, in `cerrar-tarea-pr
 git switch main
 git branch -D "<headRefName>"
 ```
+
+## Example
+
+See `examples/review-deterministic-build.md` for a complete walkthrough.
