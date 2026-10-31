@@ -13,6 +13,7 @@ Colección de skills e instrucciones globales para **OpenCode** con **DeepSeek**
 - `skills/nueva-tarea-odd/SKILL.md`: especifica un requisito nuevo bajo ODD en `odd/tasks/<NN>-<slug>.md`, crea su rama `feat/<NN>-<slug>`, pide confirmación antes de programar e implementa tarea por tarea con `ruff` y `pytest`.
 - `skills/cerrar-tarea-pr/SKILL.md`: audita la calidad del código (`ruff` + `pytest` + cero `.ipynb` y secretos), completa el documento en `odd/tasks/`, exporta la memoria del equipo con `engram sync`, crea un commit validado por GGA, abre un Pull Request en GitHub con revisor y limpia la rama después del merge.
 - `skills/revisar-pr/SKILL.md`: revisa el pull request de un compañero contra `CONSTITUTION.md` y `AGENTS.md` con `ruff`, `pytest` y GGA, y envía una sola revisión en GitHub cuyos hallazgos indican archivo, línea, regla y severidad. Nunca hace merge.
+- `skills/publicar-repo/SKILL.md`: publica un repositorio de forma segura: audita secretos, datos y pesos de modelos en todo el historial, revisa la licencia y el README, cambia la visibilidad con confirmación, protege `main` y agrega revisores con permiso `triage`.
 - `commands/`: un comando `/` de OpenCode por skill, para que cada skill aparezca también en el menú `/`.
 - `scripts/validate_skills.sh` y `.github/workflows/validate.yml`: verificaciones del repositorio, descritas en [Validación](#validación).
 
@@ -33,6 +34,7 @@ npx skills add lsosorio/skills-opencode --skill iniciar-repo-ia -a opencode -g
 npx skills add lsosorio/skills-opencode --skill nueva-tarea-odd -a opencode -g
 npx skills add lsosorio/skills-opencode --skill cerrar-tarea-pr -a opencode -g
 npx skills add lsosorio/skills-opencode --skill revisar-pr -a opencode -g
+npx skills add lsosorio/skills-opencode --skill publicar-repo -a opencode -g
 ```
 
 `npx skills` guarda su copia en `~/.agents/skills/` (registrada en `~/.agents/.skill-lock.json`), no en `~/.config/opencode/skills/`, y enlaza esa copia en el directorio de cada agente elegido con `-a` que lo necesite (Claude Code: `~/.claude/skills/<name>`). OpenCode lee `~/.agents/skills/` directamente. Compruébalo con `ls -l ~/.agents/skills/`.
@@ -97,6 +99,7 @@ done
 | `/nueva-tarea-odd <requisito>` | Especifica el requisito bajo ODD y espera aprobación antes de programar |
 | `/cerrar-tarea-pr` | Verifica la rama, completa la tarea ODD y abre el pull request |
 | `/revisar-pr <número>` | Revisa el pull request de un compañero y envía los hallazgos |
+| `/publicar-repo` | Audita el historial y luego cambia la visibilidad, protege `main` y agrega los revisores |
 
 Reinicia `opencode` después de agregar o cambiar un comando.
 
@@ -134,6 +137,9 @@ Después de instalar, reinicia `opencode` e invoca en el chat la skill que neces
 
 4. **Revisar el Pull Request de un compañero (`revisar-pr`):**
    > *"Usa `revisar-pr` en el pull request 12."*
+
+5. **Publicar el repositorio (`publicar-repo`):**
+   > *"Usa `publicar-repo` para hacer público este repositorio con acme-reviewer como revisor."*
 
 ## Validación
 

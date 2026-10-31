@@ -814,7 +814,7 @@ Set the `DEEPSEEK_API_KEY` repository secret **after pushing** (`gh secret set` 
    git log -p --all | grep -nE 'DEEPSEEK_API_KEY=[^ ]|HF_TOKEN=[^ ]|sk-[A-Za-z0-9]{20,}|ghp_[A-Za-z0-9]{20,}' || echo "ok: no secrets in history"
    ```
 
-   Any hit stops the push until the user decides: rotate the key first, and rewrite history only with explicit confirmation.
+   Any hit stops the push until the user decides: rotate the key first, and rewrite history only with explicit confirmation. To make public a repository that started private, use the `publicar-repo` skill, which also protects `main` and adds the reviewers.
 6. If the remote already exists, ask before running `git push -u origin main`.
 7. After pushing, configure the `DEEPSEEK_API_KEY` secret following step 9.3.
 

@@ -13,6 +13,7 @@ Collection of skills and global instructions for **OpenCode** powered by **DeepS
 - `skills/nueva-tarea-odd/SKILL.md`: Specifies a new requirement under ODD in `odd/tasks/<NN>-<slug>.md`, creates its `feat/<NN>-<slug>` branch, requests confirmation before coding, and implements task by task with `ruff` and `pytest`.
 - `skills/cerrar-tarea-pr/SKILL.md`: Audits code quality (`ruff` + `pytest` + zero `.ipynb`/secrets), completes the document in `odd/tasks/`, exports team memory with `engram sync`, creates a GGA-validated commit, opens a GitHub Pull Request with a reviewer, and cleans up the branch after the merge.
 - `skills/revisar-pr/SKILL.md`: Reviews a teammate's pull request against `CONSTITUTION.md` and `AGENTS.md` with `ruff`, `pytest` and GGA, and submits one GitHub review whose findings carry file, line, rule and severity. It never merges.
+- `skills/publicar-repo/SKILL.md`: Publishes a repository safely: audits secrets, data and model weights across the whole history, checks the license and the README, changes the visibility with confirmation, protects `main` and adds reviewers with `triage` permission.
 - `commands/`: one OpenCode slash command per skill, so each skill also appears in the `/` menu.
 - `scripts/validate_skills.sh` and `.github/workflows/validate.yml`: repository checks, described in [Validation](#validation).
 
@@ -33,6 +34,7 @@ npx skills add lsosorio/skills-opencode --skill iniciar-repo-ia -a opencode -g
 npx skills add lsosorio/skills-opencode --skill nueva-tarea-odd -a opencode -g
 npx skills add lsosorio/skills-opencode --skill cerrar-tarea-pr -a opencode -g
 npx skills add lsosorio/skills-opencode --skill revisar-pr -a opencode -g
+npx skills add lsosorio/skills-opencode --skill publicar-repo -a opencode -g
 ```
 
 `npx skills` keeps its copy in `~/.agents/skills/` (registered in `~/.agents/.skill-lock.json`), not in `~/.config/opencode/skills/`, and links that copy into the directory of each agent selected with `-a` that needs one (Claude Code: `~/.claude/skills/<name>`). OpenCode reads `~/.agents/skills/` directly. Check with `ls -l ~/.agents/skills/`.
@@ -97,6 +99,7 @@ done
 | `/nueva-tarea-odd <requirement>` | Specifies the requirement under ODD and waits for approval before coding |
 | `/cerrar-tarea-pr` | Verifies the branch, completes the ODD task and opens the pull request |
 | `/revisar-pr <number>` | Reviews a teammate's pull request and submits the findings |
+| `/publicar-repo` | Audits the history, then changes the visibility, protects `main` and adds the reviewers |
 
 Restart `opencode` after adding or changing a command.
 
@@ -134,6 +137,9 @@ After installing, restart `opencode` and invoke the desired skill in chat:
 
 4. **Review a teammate's Pull Request (`revisar-pr`):**
    > *"Use `revisar-pr` on pull request 12."*
+
+5. **Publish the repository (`publicar-repo`):**
+   > *"Use `publicar-repo` to make this repository public with acme-reviewer as reviewer."*
 
 ## Validation
 
