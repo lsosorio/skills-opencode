@@ -8,6 +8,7 @@ Collection of skills and global instructions for **OpenCode** powered by **DeepS
 - `skills/iniciar-repo-ia/SKILL.md`: Bootstraps private repositories and workspaces in Python with `uv` (no `pip`, no Jupyter Notebooks), preconfigured with `ruff`, `pytest`, `CONSTITUTION.md`, `AGENTS.md`, shared team memory via Engram, `odd/tasks/_template.md`, GGA (DeepSeek), and GitHub Actions CI.
 - `skills/nueva-tarea-odd/SKILL.md`: Specifies a new requirement under ODD in `odd/tasks/<NN>-<slug>.md`, creates its `feat/<NN>-<slug>` branch, requests confirmation before coding, and implements task by task with `ruff` and `pytest`.
 - `skills/cerrar-tarea-pr/SKILL.md`: Audits code quality (`ruff` + `pytest` + zero `.ipynb`/secrets), completes the document in `odd/tasks/`, exports team memory with `engram sync`, creates a GGA-validated commit, and opens a GitHub Pull Request.
+- `commands/`: one OpenCode slash command per skill, so each skill also appears in the `/` menu.
 
 ## Installation
 
@@ -33,6 +34,23 @@ npx skills add lsosorio/skills-opencode --skill cerrar-tarea-pr -a opencode -g
 mkdir -p ~/.config/opencode
 cp AGENTS.md ~/.config/opencode/AGENTS.md
 ```
+
+## Slash commands
+
+Each file in `commands/` is a slash command that loads its skill. OpenCode reads global commands from `~/.config/opencode/command/` (it also accepts `commands/`; keep a single directory so every command loads once). From the root of this repository:
+
+```bash
+mkdir -p ~/.config/opencode/command
+cp commands/*.md ~/.config/opencode/command/
+```
+
+| Command | What it does |
+|---|---|
+| `/iniciar-repo-ia` | Bootstraps the repository in the current directory |
+| `/nueva-tarea-odd <requirement>` | Specifies the requirement under ODD and waits for approval before coding |
+| `/cerrar-tarea-pr` | Verifies the branch, completes the ODD task and opens the pull request |
+
+Restart `opencode` after adding or changing a command.
 
 ## Usage workflow in OpenCode
 
